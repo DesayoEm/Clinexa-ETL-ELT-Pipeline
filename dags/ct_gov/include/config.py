@@ -8,13 +8,11 @@ columns_to_read = ["studies.protocolSection"]
 class Settings(BaseSettings):
     BASE_URL: str
     FIRST_PAGE_URL: str
-    SHARD_DIR: str
-    COMPACT_DIR: str
 
     AWS_ACCESS_KEY_ID: str
     AWS_SECRET_ACCESS_KEY: str
     AWS_REGION: str
-    CLINEXA_BUCKET_NAME: str
+    CTGOV_STAGING_BUCKET: str
 
     DB_NAME: str
     DB_USER: str
