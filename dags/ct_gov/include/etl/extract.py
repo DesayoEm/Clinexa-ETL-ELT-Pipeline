@@ -47,10 +47,10 @@ class StateLoader:
         """
         Determines where to start extraction by checking for previous state in XCom.
 
-        LIMITATION (for testing only):
+        Testing LIMITATION:
         - If you manually clear a previously successful task, it may resume from
           the success checkpoint instead of the last failure checkpoint.
-        - This does not affect production behavior as successful tasks are never retried
+        - does not affect production behavior
         #to be evaluated
 
         Returns a new ExtractorState instance with either:
@@ -195,7 +195,7 @@ class Extractor:
                     persist_extraction_state_before_exit(self.context, metadata)
                     return
 
-                # stress test
+                #stress test
                 if self.current_page == 3:
                     self.failure_generator.maybe_fail_extraction(self.current_page)
 
