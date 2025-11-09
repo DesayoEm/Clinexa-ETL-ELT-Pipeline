@@ -5,6 +5,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pandas as pd
 from typing import Dict
+import json
 from dataclasses import dataclass
 
 from ct_gov.include.config import config
@@ -145,7 +146,7 @@ class Extractor:
 
 
     def make_requests(self):
-        while self.state.last_saved_page < 10: #test volume
+        while self.state.last_saved_page < 5: #test volume
             try:
                 self.current_page = self.state.last_saved_page + 1
                 log.info(f"Starting from page {self.state.last_saved_page}")
@@ -196,8 +197,8 @@ class Extractor:
                     return
 
                 #stress test
-                if self.current_page == 3:
-                    self.failure_generator.maybe_fail_extraction(self.current_page)
+                # if self.current_page == 3:
+                #     self.failure_generator.maybe_fail_extraction(self.current_page)
 
                 self.state.last_saved_token = next_page_token
                 self.state.next_page_url = f"{config.BASE_URL}{next_page_token}"
@@ -231,26 +232,58 @@ class Extractor:
         persist_extraction_state_before_exit(self.context, metadata)
         return
 
-
     def save_response(self, data: Dict, bucket_destination: str):
+        import tempfile
+
         df = pd.DataFrame(data)
-        table = pa.Table.from_pandas(df)
+        df = df.astype(str)
 
-        buffer = io.BytesIO()
-        pq.write_table(table, buffer)
-        buffer.seek(0)
+        # Write to temp file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.parquet') as tmp:
+            tmp_path = tmp.name
 
-        bucket_name = config.CTGOV_STAGING_BUCKET
-        key = f"{bucket_destination}/{self.current_page}.parquet"
+        try:
+            # Write parquet to file
+            df.to_parquet(tmp_path, engine='pyarrow', compression='snappy')
 
-        self.s3.load_bytes(
-            bytes_data=buffer.getvalue(),
-            key=key,
-            bucket_name=bucket_name,
-            replace=True
-        )
-        self.state.last_saved_page += 1
+            # Upload file directly (not bytes)
+            bucket_name = config.CTGOV_STAGING_BUCKET
+            key = f"{bucket_destination}/{self.current_page}.parquet"
 
-        log.info(
-            f"Successfully saved page {self.state.last_saved_page} at s3://{bucket_name}/{key}"
-        )
+            # Use boto3 directly
+            import boto3
+            s3_client = boto3.client('s3')
+            s3_client.upload_file(tmp_path, bucket_name, key)
+
+            self.state.last_saved_page += 1
+            log.info(f"Successfully saved page {self.state.last_saved_page}")
+        finally:
+            import os
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
+
+    # def save_response(self, data: Dict, bucket_destination: str):
+    #     df = pd.DataFrame(data)
+    #     df = df.astype(str)
+    #
+    #
+    #     buffer = io.BytesIO()
+    #     table = pa.Table.from_pandas(df)
+    #     pq.write_table(table, buffer, compression='snappy')
+    #     buffer.seek(0)
+    #
+    #     bucket_name = config.CTGOV_STAGING_BUCKET
+    #     key = f"{bucket_destination}/{self.current_page}.parquet"
+    #
+    #     self.s3.load_bytes(
+    #         bytes_data=buffer.getvalue(),
+    #         key=key,
+    #         bucket_name=bucket_name,
+    #         replace=True
+    #     )
+    #     self.state.last_saved_page += 1
+    #
+    #     log.info(
+    #         f"Successfully saved page {self.state.last_saved_page} at s3://{bucket_name}/{key}"
+    #     )
