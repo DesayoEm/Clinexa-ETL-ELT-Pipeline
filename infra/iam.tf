@@ -38,8 +38,8 @@ resource "aws_iam_policy" "s3_access" {
           "s3:ListBucket"
         ]
         Resource = [
-          aws_s3_bucket.clinexa-ctgov-staging.arn,
-          "${aws_s3_bucket.clinexa-ctgov-staging.arn}/*"
+          aws_s3_bucket.clinexa-ctgov.arn,
+          "${aws_s3_bucket.clinexa-ctgov.arn}/*"
         ]
       }
     ]

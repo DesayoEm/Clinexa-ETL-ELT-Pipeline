@@ -1,5 +1,5 @@
-resource "aws_s3_bucket" "clinexa-ctgov-staging" {
-  bucket = "clinexa-ctgov-staging"
+resource "aws_s3_bucket" "clinexa-ctgov" {
+  bucket = "clinexa-ct"
   force_destroy = true #will be disabled in prod
 
   tags = {
@@ -9,7 +9,7 @@ resource "aws_s3_bucket" "clinexa-ctgov-staging" {
 }
 
 resource "aws_s3_bucket_versioning" "ctgov_versioning" {
-  bucket = aws_s3_bucket.clinexa-ctgov-staging.id
+  bucket = aws_s3_bucket.clinexa-ctgov.id
   versioning_configuration {
     status = "Enabled"
   }
@@ -21,7 +21,7 @@ resource "aws_s3_bucket_versioning" "ctgov_versioning" {
 
 
 resource "aws_s3_bucket_lifecycle_configuration" "ct_gov_archive_lifecycle" {
-  bucket = aws_s3_bucket.clinexa-ctgov-staging.id
+  bucket = aws_s3_bucket.clinexa-ctgov.id
 
   rule {
     id     = "TransitionToDeepArchive"
