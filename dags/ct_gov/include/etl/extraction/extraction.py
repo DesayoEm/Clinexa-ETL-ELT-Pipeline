@@ -112,7 +112,7 @@ class StateHandler:
 
         Variable.set(checkpoint_key, json.dumps(checkpoint_value))
         log.info(
-            f"Checkpoint saved - Key: {checkpoint_key},Last saved: {last_saved_page}"
+            f"Checkpoint saved - Key: {checkpoint_key}, Page: {last_saved_page}, Token {last_saved_token}"
         )
 
 
@@ -159,14 +159,18 @@ class Extractor:
 
                 for attempt in range(1, self.max_retries + 1):
                     response = requests.get(self.next_page_url, timeout=self.timeout)
+                    log.info(f"codddef {response.status_code} saved")
 
                     if response.status_code == 200:
                         log.info(f"Successfully made request to page {current_page}")
                         data = response.json()
                         next_page_token = data.get("nextPageToken")
+
+                        log.info(f"token is {next_page_token} saved")
                         self.last_saved_token = next_page_token
 
                         self.save_response(self.last_saved_page, data)
+                        log.info("response saved")
                         self.next_page_url = f"{config.BASE_URL}{self.last_saved_token}"
                         break
 
@@ -201,6 +205,7 @@ class Extractor:
                     return metadata
 
             except Exception as e:
+                log.info(f"{str(e)}")
                 self.state.save_checkpoint(self.last_saved_page, self.last_saved_token)
                 persist_extraction_state_before_failure(
                     error=e,
@@ -213,6 +218,7 @@ class Extractor:
                 )
 
         self.state.save_checkpoint(self.last_saved_page, self.last_saved_token)
+        log.info("COMPLETTTTTTEEEEE")
         metadata = {
             "pages_loaded": self.last_saved_page,
             "last_saved_token": self.last_saved_token,  # using last known state
@@ -238,7 +244,9 @@ class Extractor:
         self.s3_hook.load_bytes(
             bytes_data=buffer.getvalue(), key=key, bucket_name=bucket, replace=True
         )
+
         self.last_saved_page += 1
+        log.info("fernogrkfep,;wfkol,;dkmqjhbguhijoklp;")
 
 
 

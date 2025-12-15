@@ -1,5 +1,5 @@
-# ct_gov/include/tests/test_extractor_resilience.py
-from ct_gov.include.extractors.extractor import Extractor
+
+from ct_gov.include.etl.extraction.extraction import Extractor
 from ct_gov.include.tests.failure_generators import FailureGenerator
 
 
@@ -8,7 +8,7 @@ class ExtractorWithFailureInjection(Extractor):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.failure_generator = FailureGenerator(True, 0.5)
+        self.failure_generator = FailureGenerator(True, 1.0)
 
     def make_requests(self):
         if self.last_saved_page == 3:
