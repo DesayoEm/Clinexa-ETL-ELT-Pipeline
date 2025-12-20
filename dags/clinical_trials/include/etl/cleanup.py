@@ -1,13 +1,12 @@
-from airflow.utils.log.logging_mixin import LoggingMixin
+import logging
 from airflow.models.variable import Variable
-
-log = LoggingMixin().log
 
 
 class CleanUp:
     def __init__(self, context):
         self.context = context
         self.execution_date = self.context["ds"]
+        self.log = logging.getLogger('airflow.task')
 
     def clear_all_checkpoints(self):
         """
@@ -18,9 +17,9 @@ class CleanUp:
 
         task_ids = [task.task_id for task in dag.tasks]
 
-        log.info(f"Starting checkpoint cleanup for {self.execution_date}...")
-        log.info(f"DAG has {len(task_ids)} tasks")
-        log.info(f"-------------")
+        self.log.info(f"Starting checkpoint cleanup for {self.execution_date}...")
+        self.log.info(f"DAG has {len(task_ids)} tasks")
+        self.log.info(f"-------------")
 
         cleared_count = 0
         not_found_count = 0
@@ -29,17 +28,17 @@ class CleanUp:
             checkpoint_key = f"{task_id}_{self.execution_date}"
             try:
                 Variable.delete(checkpoint_key)
-                log.info(f"Cleared checkpoint: {checkpoint_key}")
+                self.log.info(f"Cleared checkpoint: {checkpoint_key}")
                 cleared_count += 1
             except KeyError:
-                log.debug(f"No checkpoint for: {checkpoint_key}")
+                self.log.debug(f"No checkpoint for: {checkpoint_key}")
                 not_found_count += 1
             except Exception as e:
-                log.error(f"Failed to clear {checkpoint_key}: {e}")
+                self.log.error(f"Failed to clear {checkpoint_key}: {e}")
 
-        log.info(f"total tasks: {len(task_ids)}")
-        log.info(f"Cleared: {cleared_count}")
-        log.info(f"Not found: {not_found_count}")
+        self.log.info(f"total tasks: {len(task_ids)}")
+        self.log.info(f"Cleared: {cleared_count}")
+        self.log.info(f"Not found: {not_found_count}")
 
         return {
             "execution_date": self.execution_date,
