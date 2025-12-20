@@ -1,4 +1,5 @@
 import requests
+import logging
 import io
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -14,14 +15,7 @@ from clinical_trials.include.handlers.rate_limit_handler import RateLimiterHandl
 from clinical_trials.include.handlers.s3_handler import S3Handler
 from clinical_trials.include.exceptions import RequestTimeoutError
 from clinical_trials.include.config import config
-from clinical_trials.include.notification_middleware.extractor_middleware import (
-    persist_extraction_state_before_failure,
-)
-
-
-from airflow.utils.log.logging_mixin import LoggingMixin
-
-log = LoggingMixin().log
+from clinical_trials.include.monitoring.extractor_middleware import persist_extraction_state_before_failure
 
 
 class StateHandler:
@@ -30,6 +24,7 @@ class StateHandler:
     def __init__(self, context: Context):
         self.context = context
         self.execution_date = self.context.get("ds")
+        self.log = logging.getLogger('airflow.task')
 
     def determine_state(self) -> Dict:
         """
@@ -39,7 +34,7 @@ class StateHandler:
         - Default values (start fresh from page 0)
         """
 
-        log.info("Determining starting point for extractor...")
+        self.log.info("Determining starting point for extractor...")
         default_state = {
             "last_saved_page": 0,
             "last_saved_token": None,
@@ -48,12 +43,12 @@ class StateHandler:
 
         ti = self.context.get("task_instance")
         if not ti:
-            log.warning("No task instance found in context, starting fresh")
+            self.log.warning("No task instance found in context, starting fresh")
             return default_state
 
-        log.info(f"Current try_number: {ti.try_number}")
+        self.log.info(f"Current try_number: {ti.try_number}")
         if ti.try_number == 1:
-            log.info("First run. Starting fresh extraction")
+            self.log.info("First run. Starting fresh extraction")
             return default_state
 
         checkpoint_key = f"{ti.task_id}_{self.execution_date}"
@@ -64,10 +59,10 @@ class StateHandler:
             last_saved_page = checkpoint.get("last_saved_page")
             last_saved_token = checkpoint.get("last_saved_token")
 
-            log.info(
+            self.log.info(
                 f"Checkpoint loaded - Key: {checkpoint_key}, Page: {last_saved_page}, Token: {last_saved_token}"
             )
-            log.info(f"Resuming from page {last_saved_page + 1}")
+            self.log.info(f"Resuming from page {last_saved_page + 1}")
 
             return {
                 "last_saved_page": last_saved_page,
@@ -75,25 +70,25 @@ class StateHandler:
                 "next_page_url": f"{config.BASE_URL}{last_saved_token}",
             }
         except KeyError:
-            log.info(f"No checkpoint found for key: {checkpoint_key}")
-            log.info(f"  Starting fresh from page 0")
+            self.log.info(f"No checkpoint found for key: {checkpoint_key}")
+            self.log.info(f"  Starting fresh from page 0")
             return default_state
 
         except json.JSONDecodeError as e:
-            log.error(
+            self.log.error(
                 f"Failed to parse checkpoint JSON: {e}\n"
                 f"JSON DATA\n\n"
                 f"{checkpoint_json}"
             )
 
-            log.info(f"Starting fresh from page 0")
+            self.log.info(f"Starting fresh from page 0")
             return default_state
 
         except Exception as e:
-            log.info(
+            self.log.info(
                 f"ERROR finding checkpoint for key: {checkpoint_key} \n Error: {e}"
             )
-            log.info(f"Defaulting to 0")
+            self.log.info(f"Defaulting to 0")
             return default_state
 
     def save_checkpoint(self, last_saved_page: int, last_saved_token: str) -> None:
@@ -111,7 +106,7 @@ class StateHandler:
         }
 
         Variable.set(checkpoint_key, json.dumps(checkpoint_value))
-        log.info(
+        self.log.info(
             f"Checkpoint saved - Key: {checkpoint_key}, Page: {last_saved_page}, Token {last_saved_token}"
         )
 
@@ -123,6 +118,7 @@ class Extractor:
 
         self.context = context
         self.execution_date = self.context.get("ds")
+        self.log = logging.getLogger('airflow.task')
         self.state = StateHandler(self.context)
         self.timeout: int = timeout
         self.max_retries: int = max_retries
@@ -137,7 +133,7 @@ class Extractor:
         self.s3_hook = s3_hook
         self.rate_limit_handler = RateLimiterHandler()
 
-        log.info(
+        self.log.info(
             f"Initializing Extractor...\n"
             f"Last saved page: {self.last_saved_page}\n"
             f"Starting URL: {self.next_page_url}"
@@ -152,7 +148,7 @@ class Extractor:
             next_page_token = None
 
             try:
-                log.info(f"Starting from page {current_page}")
+                self.log.info(f"Starting from page {current_page}")
 
                 self.rate_limit_handler.wait_if_needed()
 
@@ -160,7 +156,7 @@ class Extractor:
                     response = requests.get(self.next_page_url, timeout=self.timeout)
 
                     if response.status_code == 200:
-                        log.info(f"Successfully made request to page {current_page}")
+                        self.log.info(f"Successfully made request to page {current_page}")
                         data = response.json()
                         next_page_token = data.get("nextPageToken")
 
@@ -171,7 +167,7 @@ class Extractor:
                         break
 
                     elif attempt >= self.max_retries and response.status_code != 200:
-                        log.error(
+                        self.log.error(
                             f"Request exception FAILED AFTER {self.max_retries} attempts on page {current_page}"
                         )
 
@@ -190,7 +186,7 @@ class Extractor:
 
                 if not next_page_token:
                     # consider where this could be as a result of errors, and not the extractor reaching the last page
-                    log.info(f"Next page not found on page {current_page}")
+                    self.log.info(f"Next page not found on page {current_page}")
 
                     self.state.save_checkpoint(
                         self.last_saved_page, self.last_saved_token
@@ -205,7 +201,7 @@ class Extractor:
                     return metadata
 
             except Exception as e:
-                log.info(f"{str(e)}")
+                self.log.info(f"{str(e)}")
                 self.state.save_checkpoint(self.last_saved_page, self.last_saved_token)
                 persist_extraction_state_before_failure(
                     error=e,
@@ -267,5 +263,5 @@ class Extractor:
         )
 
         destination = f"s3://{bucket}/{key}" if key else "Unknown"
-        log.info(f"Successfully saved page {self.last_saved_page} at {destination}")
-        log.info(f"Metadata saved to s3://{bucket}/{manifest_key}")
+        self.log.info(f"Successfully saved page {self.last_saved_page} at {destination}")
+        self.log.info(f"Metadata saved to s3://{bucket}/{manifest_key}")
