@@ -1,6 +1,6 @@
 resource "aws_s3_bucket" "clinexa-ctgov" {
   bucket = "clinexa-ct"
-  force_destroy = true #will be disabled in prod
+  force_destroy = true #disabled in prod
 
   tags = {
     Name        = "CT gov bucket"
