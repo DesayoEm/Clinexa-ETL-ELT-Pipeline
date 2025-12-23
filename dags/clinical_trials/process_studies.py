@@ -19,7 +19,7 @@ def process_ct_gov():
     @task
     def extract():
         context = get_current_context()
-        s3_hook = S3Hook(aws_conn_id="aws_airflow_user")
+        s3_hook = S3Hook(aws_conn_id="aws_airflow")
 
         e = Extractor(context=context, s3_hook=s3_hook)
 
