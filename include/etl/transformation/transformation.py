@@ -1,11 +1,13 @@
-from typing import Tuple
+from typing import Dict, List, Any, Hashable, Tuple
 import io
 import logging
 import json
 from datetime import datetime
 import pandas as pd
+import pyarrow.parquet as pq
 import hashlib
 
+from transformer_config import ONE_TO_ONE_FIELDS, NESTED_FIELDS
 from data_cleaning import Cleaner
 from airflow.utils.context import Context
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
@@ -19,9 +21,7 @@ class Transformer:
 
         self.s3 = s3_dest_hook or S3Hook(aws_conn_id="aws_airflow")
         self.cleaner = Cleaner()
-        self.problematic_records: pd.DataFrame = pd.DataFrame()
-        self.batch_size: int = 100000
-        self.duplicate_count: int = 0
+
 
     @staticmethod
     def generate_key(*args) -> str:
@@ -29,10 +29,6 @@ class Transformer:
         combined = "|".join(str(arg) for arg in args if arg is not None)
         return hashlib.sha256(combined.encode()).hexdigest()[:16]
 
-    def standardize_columns(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Reusable column standardization"""
-        df.columns = [self.cleaner.standardize_column_name(col) for col in df.columns]
-        return df
 
     @staticmethod
     def remove_duplicates(df: pd.DataFrame) -> Tuple[pd.DataFrame, int]:
@@ -43,14 +39,116 @@ class Transformer:
 
         return df, duplicate_count
 
-    @staticmethod
-    def add_key_as_first_column(df: pd.DataFrame, key_col: str) -> pd.DataFrame:
-        """Move key column to first position"""
-        return df[[key_col] + [col for col in df.columns if col != key_col]]
 
-    def transform_entity(self, entity_data_location: str, entity_type: str):
+    def read_parquet(self, data_loc: str):
         """Transform and load at once or in batches"""
         try:
-            entity_df = pd.read_parquet(entity_data_location)
+            df_studies = pd.read_parquet(data_loc)
+            df_studies = pd.json_normalize(df_studies['studies'])
+
+            for study in df_studies:
+                self.extract_study_fields(study)
+
         except Exception as e:
             raise
+
+
+    def extract_study_fields(self, df_normalized):
+        """Transform and load at once or in batches"""
+        try:
+            df_study = pd.DataFrame()
+            study_key = self.generate_key(df_normalized['protocolSection.identificationModule.nctId'])
+            if not study_key:
+                self.log.warning(f"Study missing NCT ID, skipping index {''}")
+                return
+            df_study['study_key'] = study_key
+
+            #clean specific fields
+
+            for entity_key in NESTED_FIELDS:
+                self.extract_study_entity(NESTED_FIELDS, entity_key, study_key, df_normalized)
+
+        except Exception as e:
+            raise
+
+    def extract_study_entity(self, entity_map: Dict, entity_name: str, study_key: str, study_df: pd.DataFrame):
+        method_name = entity_map.get(entity_name).lower()
+        transformer_method = getattr(self, method_name)
+
+        entity_df = transformer_method(study_key, study_df)
+
+        return entity_df
+
+
+    def extract_sponsors(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_conditions(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_interventions(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_arm_groups(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_locations(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_officials(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_outcomes(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_see_also(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_study_phases(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_age_group(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_ipd_info_types(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_id_infos(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_nct_id_aliases(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_condition_mesh(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_intervention_mesh(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_large_documents(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_unposted_events(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_violation_events(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_removed_countries(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+    def extract_submission_infos(self, study_key: str, study_df: pd.DataFrame):
+        pass
+
+
+
+
+
+
+
+
+
+
+
+
+
