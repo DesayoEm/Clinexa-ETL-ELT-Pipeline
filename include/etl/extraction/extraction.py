@@ -12,9 +12,8 @@ import time
 from airflow.models import Variable
 from airflow.utils.context import Context
 
-from clinical_trials.include.monitoring.exceptions import RequestExhaustionError
-from clinical_trials.include.handlers.s3_handler import S3Handler
-from clinical_trials.include.config import config
+from include.monitoring.exceptions import RequestExhaustionError
+from config.env_config import config
 
 
 
@@ -394,7 +393,7 @@ class Extractor:
                     )
 
                     manifest = {
-                        "location": f"s3://{config.CTGOV_STAGING_BUCKET}/{self.execution_date}",
+                        "location": f"s3://{config.CTGOV_BUCKET}/{self.execution_date}",
                         "created_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
                         "metrics": {
                             "page_count": self.last_saved_page,
@@ -411,18 +410,18 @@ class Extractor:
                     self.s3_hook.load_string(
                         string_data=json.dumps(manifest, indent=2),
                         key=manifest_key,
-                        bucket_name=config.CTGOV_STAGING_BUCKET,
+                        bucket_name=config.CTGOV_BUCKET,
                         replace=True
                     )
 
                     self.log.info(
-                        f"Manifest saved to s3://{config.CTGOV_STAGING_BUCKET}/{self.execution_date}/{manifest_key}")
+                        f"Manifest saved to s3://{config.CTGOV_BUCKET}/{self.execution_date}/{manifest_key}")
 
                     metadata = {
                         "pages_extracted": self.last_saved_page,
                         "last_valid_token": self.previous_token,
                         "final_token": self.last_saved_token,
-                        "data_location": f"s3://{config.CTGOV_STAGING_BUCKET}/{self.execution_date}/"
+                        "data_location": f"s3://{config.CTGOV_BUCKET}/{self.execution_date}/"
                     }
                     return metadata
 
@@ -495,7 +494,7 @@ class Extractor:
         pq.write_table(table, buffer)
         buffer.seek(0)
 
-        bucket = config.CTGOV_STAGING_BUCKET
+        bucket = config.CTGOV_BUCKET
         key = f"{self.execution_date}/{page_number}.parquet"
 
         self.s3_hook.load_bytes(

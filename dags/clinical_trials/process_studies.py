@@ -1,14 +1,10 @@
 from airflow.sdk import dag, task
 from pendulum import datetime
+
+
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.sdk.definitions.context import get_current_context
-from clinical_trials.include.etl.extraction.extraction import Extractor
-from clinical_trials.include.config import config
-
-
-from airflow.utils.log.logging_mixin import LoggingMixin
-
-log = LoggingMixin().log
+from include.etl.extraction.extraction import Extractor
 
 
 @dag(
