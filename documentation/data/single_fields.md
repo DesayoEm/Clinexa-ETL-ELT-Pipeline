@@ -1,8 +1,8 @@
-# DATA DOCUMENTATION
+
 ### Source: https://clinicaltrials.gov/data-api/about-api/study-data-structure
 
 
-### ONE TO ONE FIELDS 
+### SINGLE FIELDS 
 
 ## Identification
 

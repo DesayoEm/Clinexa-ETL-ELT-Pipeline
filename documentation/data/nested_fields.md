@@ -1,94 +1,188 @@
-NESTED_FIELDS = {
 
-  "sponsors": {
-        "path": "protocolSection.sponsorCollaboratorsModule.leadSponsor",
-        "object_type": "simple dict",
-        "fields": [
-            ("lead_sponsor_name", "name"),
-            ("lead_sponsor_class", "class"),
-        ],
-        "table_name": "sponsors",
-        "bridge_table_name": "study_sponsors",
-        "transformer_method": "extract_sponsors"
-    },
+### Source: https://clinicaltrials.gov/data-api/about-api/study-data-structure
 
-    "collaborators": {
-        "path": "protocolSection.sponsorCollaboratorsModule.collaborator",
-        "object_type": "array_of_dicts",
-        "fields": [
-            ("sponsor_name", "name"),
-            ("sponsor_class", "class"),
-        ],
-        "table_name": "sponsor",
-        "bridge_table_name": "study_sponsors",
-        "transformer_method": "extract_sponsors"
-    },
-    
-    "conditions": {
-        "path": "protocolSection.conditionsModule.conditions",
-        "object_type": "simple_array",
-        "table_name": "conditions",
-        "bridge_table_name": "study_conditions",
-        "field_name": "condition_name",
-        "transformer_method":"extract_conditions"
-    },
-    
-    "keywords": {
-        "path": "protocolSection.conditionsModule.keywords",
-        "entity": "keyword",
-        "object_type": "simple_array",
-        "table_name": "keywords",
-        "bridge_table_name": "study_keywords",
-        "field_name": "study_keyword",
-        "transformer_method":"extract_keywords"
-    },
 
-    "interventions": {
-        "path": "protocolSection.armsInterventionsModule.interventions",
-        "entity": "intervention",
-        "object_type": "array_of_dicts",
-        "fields": [
-            ("intervention_name", "name"),
-            ("intervention_description", "description"),
-            ("object_type", "object_type"),
-        ],
-        "nested": {
-            "nested_path": {
-                "object_type": "nested_simple_array",
-                "table_name": "intervention_other_names",
-                "field_name": "intervention_other_name"
-        },
-        "table_name": "interventions",
-        "bridge_table_name": "study_interventions",
-        "transformer_method": "extract_interventions"
-        }
-    },
+### NESTED FIELDS
 
-    "arm_groups": {
-        "path": "protocolSection.armsInterventionsModule.armGroups",
-        "object_type": "array_of_dicts",
-        "table_name": "study_arm_groups",
-        "fields": [
-            ("arm_group_label", "label"),
-            ("arm_group_description", "description"),
-            ("object_type", "object_type"),
-        ],
-        "nested": {
-            "interventionNames": {
-                "object_type": "nested_simple_array",
-                "bridge_table_name": "arm_group_interventions",
-                "field_name": "intervention_name"
-        },
-        "transformer_method": "extract_arm_groups"
-        }
-    },
+## SponsorCollaboratorsModule
+
+### sponsors
+
+**Index Field(s):** 
+- `protocolSection.sponsorCollaboratorsModule.leadSponsor`
+- `protocolSection.sponsorCollaboratorsModule.collaborators[]`
+
+**Object Type**: Simple dict (leadSponsor) / Array of dicts (collaborators)
+
+**Description**: Organizations responsible for the study.
+
+- **Lead Sponsor**: Exactly 1 per study. The organization or person who initiates the study and has authority and control over it.
+- **Collaborators**: 0 to many. Other organizations providing support (funding, design, implementation, data analysis, reporting).
+
+
+#### Fields
+
+##### `name`
+- **Description**: Name of the sponsoring entity or individual
+- **Data Type**: Text
+- **Limit**: 160 characters
+
+##### `class`
+- **Description**: Category of the sponsoring organization
+- **Data Type**: Enum(AgencyClass)
+- **Enum Values**:
+  - `NIH` — National Institutes of Health
+  - `FED` — Other Federal Agency
+  - `OTHER_GOV` — Other Governmental (non-US)
+  - `INDIV` — Individual
+  - `INDUSTRY` — Industry/Pharmaceutical
+  - `NETWORK` — Research Network
+  - `AMBIG` — Ambiguous
+  - `OTHER` — Other
+  - `UNKNOWN` — Unknown
+
+
+
+#### Model Mapping
+
+- **Target Table**: `dim_sponsors`
+- **Bridge Table**: `bridge_study_sponsors` 
+- **Discriminator**: `is_lead_sponsor` (boolean) — added during transformation
+
+---
+
+
+## ConditionsModule 
+
+### conditions
+
+**Index Field(s):** `protocolSection.conditionsModule.conditions`
+
+**Object Type**: Simple array
+
+**Description**: The name(s) of the disease(s) or condition(s) studied in the clinical study, or the focus of the clinical study.
+
+#### Model Mapping
+- **Target Table**: `conditions`
+- **Bridge Table**: `bridge_study_conditions` 
+- **column_name**: `condition_name` 
+
+---
+
+### keywords
+
+**Index Field(s):** `protocolSection.conditionsModule.keywords`
+
+**Object Type**: Simple array
+
+**Description**: Words or phrases that best describe the protocol. Keywords help users find studies in the database
+
+#### Model Mapping
+- **Target Table**: `keywords`
+- **Bridge Table**: `bridge_study_keywords` 
+- **column_name**: `keyword` 
+
+---
+
+## armsInterventionsModule 
+
+### interventions
+
+**Index Field(s):** `protocolSection.armsInterventionsModule.interventions`
+
+**Object Type**: Array of Dicts
+
+**Description**: The intervention(s) associated with each arm or group; at least one intervention must be specified for interventional studies. 
+
+For observational studies, the intervention(s)/exposure(s) of interest
+
+
+#### Fields
+
+##### `name`
+- **Description**: brief descriptive name used to refer to the intervention(s) studied in each arm of the clinical study. 
+- **Data Type**: Text
+- **Limit**: 200 characters
+
+##### `description`
+- **Description**: Details that can be made public about the intervention, other than the Intervention Name(s) and Other Intervention Name(s), sufficient to distinguish the intervention from other, similar interventions studied in the same or another clinical study. 
+- **Data Type**: Text
+- **Limit**: 1000 characters
+
+#### Nested Fields
+##### `otherNames`
+- **Description**:  Other current and former name(s) or alias(es), if any, different from the Intervention Name. 
+- **Data Type**: [Text] / Simple array
+- **Limit**: 160 characters
+
+
+#### Model Mapping
+- **Target Table**: `interventions`
+- **Bridge Table**: `bridge_study_interventions` 
+
+
+---
+
+### arm_groups
+
+**Index Field(s):** `protocolSection.armsInterventionsModule.armGroups`
+
+**Object Type**: Array of Dicts
+
+**Description**: A description of each arm of the clinical trial that indicates its role in the clinical trial
+
+
+#### Fields
+
+##### `label`
+- **Description**: The short name used to identify the arm.
+- **Data Type**: Text
+- **Limit**: 100 characters
+
+##### `type`
+- **Description**: The role of each arm in the clinical trial.
+- **Data Type**: Enum(ArmGroupType)
+- **Source Values**: 
+
+- * EXPERIMENTAL - Experimental
+- * ACTIVE_COMPARATOR - Active Comparator
+- * PLACEBO_COMPARATOR - Placebo Comparator
+- * SHAM_COMPARATOR - Sham Comparator
+- * NO_INTERVENTION - No Intervention
+- * OTHER - Other
+
+
+##### `description`
+- **Description**:  Additional descriptive information (including which interventions are administered in each arm) to differentiate each arm from other arms in the clinical trial.
+- **Data Type**: Text
+- **Limit**: 999 characters
+
+
+#### Nested Fields
+##### `interventionNames`
+- **Description**:  A brief descriptive name used to refer to the intervention(s) studied in each arm of the clinical study. 
+- **Data Type**: [Text] / Simple array
+- **Limit**: 200 characters
+
+
+#### Model Mapping
+- **Target Table**: `study_arms`
+- **Bridge Table**: `bridge_study_arms` 
+
+#how do arms tie back to interventions?
+
+
+---
+
+
+## contactsLocationsModule
 
     "locations": {
-        "path": "protocolSection.contactsLocationsModule.locations",
-        "object_type": "array_of_dicts",
-        "table_name": "sites",
-        "bridge_table_name": "study_sites",
-        "fields": [
+        **Index Field:** "protocolSection.contactsLocationsModule.locations",
+        **Object_type**: "array_of_dicts",
+        **Table_name**: "sites",
+        **Bridge_table_name**: "study_sites",
+        **Fields**: [
             ("site_facility", "facility"),
             ("city", "city"),
             ("state", "state"),
@@ -98,15 +192,15 @@ NESTED_FIELDS = {
         ],
         "nested": {
             "geoPoint": {
-                "object_type": "simple_array",
-                 "fields": ["lat", "lon"],
+                **Object_type**: "simple_array",
+                 **Fields**: ["lat", "lon"],
             },
 
             "contacts": {
-                "object_type": "nested_array_of_dicts",
-                "table_name": "contacts",
-                "bridge_table_name": "location_contacts",
-                "fields": [
+                **Object_type**: "nested_array_of_dicts",
+                **Table_name**: "contacts",
+                **Bridge_table_name**: "location_contacts",
+                **Fields**: [
                     ("name", "name"),
                     ("role", "role"),
                     ("email", "email"),
@@ -119,11 +213,11 @@ NESTED_FIELDS = {
     },
 
     "central_contacts": {
-        "path": "protocolSection.contactsLocationsModule.centralContacts",
-        "object_type": "array_of_dicts",
-        "table_name": "contacts",
-        "bridge_table_name": "study_contacts",
-        "fields": [
+        **Index Field:** "protocolSection.contactsLocationsModule.centralContacts",
+        **Object_type**: "array_of_dicts",
+        **Table_name**: "contacts",
+        **Bridge_table_name**: "study_contacts",
+        **Fields**: [
             ("name", "name"),
             ("role", "role"),
             ("email", "email"),
@@ -134,11 +228,11 @@ NESTED_FIELDS = {
     },
 
     "overall_officials": {
-        "path": "protocolSection.contactsLocationsModule.overallOfficials",
-        "object_type": "array_of_dicts",
-        "table_name": "investigators",
-        "bridge_table_name": "study_investigators",
-        "fields": [
+        **Index Field:** "protocolSection.contactsLocationsModule.overallOfficials",
+        **Object_type**: "array_of_dicts",
+        **Table_name**: "investigators",
+        **Bridge_table_name**: "study_investigators",
+        **Fields**: [
             ("name", "name"),
             ("affiliation", "affiliation"),
             ("role", "role")
@@ -147,10 +241,10 @@ NESTED_FIELDS = {
     },
 
     "primary_outcomes": {
-        "path": "protocolSection.outcomesModule.primaryOutcomes",
-        "object_type": "array_of_dicts",
-        "table_name": "study_outcomes",
-        "fields": [
+        **Index Field:** "protocolSection.outcomesModule.primaryOutcomes",
+        **Object_type**: "array_of_dicts",
+        **Table_name**: "study_outcomes",
+        **Fields**: [
             ("measure", "measure"),
             ("description", "description"),
             ("timeFrame", "timeFrame")
@@ -160,10 +254,10 @@ NESTED_FIELDS = {
     },
 
     "secondary_outcomes": {
-        "path": "protocolSection.outcomesModule.secondaryOutcomes",
-        "object_type": "array_of_dicts",
-        "table_name": "study_outcomes",
-        "fields": [
+        **Index Field:** "protocolSection.outcomesModule.secondaryOutcomes",
+        **Object_type**: "array_of_dicts",
+        **Table_name**: "study_outcomes",
+        **Fields**: [
             ("measure", "measure"),
             ("description", "description"),
             ("timeFrame", "timeFrame")
@@ -173,10 +267,10 @@ NESTED_FIELDS = {
     },
 
     "other_outcomes": {
-        "path": "protocolSection.outcomesModule.otherOutcomes",
-        "object_type": "array_of_dicts",
-        "table_name": "study_outcomes",
-        "fields": [
+        **Index Field:** "protocolSection.outcomesModule.otherOutcomes",
+        **Object_type**: "array_of_dicts",
+        **Table_name**: "study_outcomes",
+        **Fields**: [
             ("measure", "measure"),
             ("description", "description"),
             ("timeFrame", "timeFrame")
@@ -186,17 +280,17 @@ NESTED_FIELDS = {
     },
 
     "references": {
-        "path": "protocolSection.referencesModule.references",
-        "object_type": "array_of_dicts",
-        "table_name": "study_publications",
-        "extract_fields": ["pmid", "object_type", "citation"],
+        **Index Field:** "protocolSection.referencesModule.references",
+        **Object_type**: "array_of_dicts",
+        **Table_name**: "study_publications",
+        "extract_fields": ["pmid", **Object_type**, "citation"],
     },
 
     "retractions": {
-        "path": "protocolSection.referencesModule.retractions",
-        "object_type": "array_of_dicts",
-        "table_name": "study_retractions",
-        "fields": [
+        **Index Field:** "protocolSection.referencesModule.retractions",
+        **Object_type**: "array_of_dicts",
+        **Table_name**: "study_retractions",
+        **Fields**: [
             ("pmid", "pmid"),
             ("status", "status")
         ],
@@ -204,10 +298,10 @@ NESTED_FIELDS = {
     },
 
     "see_also": {
-        "path": "protocolSection.referencesModule.seeAlsoLinks",
-        "object_type": "array_of_dicts",
-        "table_name": "study_see_also",
-        "fields": [
+        **Index Field:** "protocolSection.referencesModule.seeAlsoLinks",
+        **Object_type**: "array_of_dicts",
+        **Table_name**: "study_see_also",
+        **Fields**: [
             ("label", "label"),
             ("url", "url")
         ],
@@ -215,41 +309,41 @@ NESTED_FIELDS = {
     },
 
     "phases": {
-        "path": "protocolSection.designModule.phases",
-        "object_type": "simple_array",
-        "table_name": "phases",
-        "bridge_table_name": "study_phases",
-        "field_name": "phase",
+        **Index Field:** "protocolSection.designModule.phases",
+        **Object_type**: "simple_array",
+        **Table_name**: "phases",
+        **Bridge_table_name**: "study_phases",
+        **Field_name**: "phase",
         "transformer_method": "extract_study_phases"
     },
 
 
     "std_ages": {
-        "path": "protocolSection.eligibilityModule.stdAges",
-        "object_type": "simple_array",
-        "table_name": "age_groups",
-        "bridge_table_name": "study_age_groups",
-        "field_name": "age_group",
+        **Index Field:** "protocolSection.eligibilityModule.stdAges",
+        **Object_type**: "simple_array",
+        **Table_name**: "age_groups",
+        **Bridge_table_name**: "study_age_groups",
+        **Field_name**: "age_group",
         "transformer_method": "extract_age_group"
     },
 
     "ipd_info_types": {
-        "path": "protocolSection.ipdSharingStatementModule.infoTypes",
-        "object_type": "simple_array",
-        "table_name": "ipd_info_types",
-        "bridge_table_name": "study_ipd_info_types",
-        "field_name": "info_type",
+        **Index Field:** "protocolSection.ipdSharingStatementModule.infoTypes",
+        **Object_type**: "simple_array",
+        **Table_name**: "ipd_info_types",
+        **Bridge_table_name**: "study_ipd_info_types",
+        **Field_name**: "info_type",
         "transformer_method": "extract_ipd_info_types"
     },
 #NOT EVERYTHING NEEDS A BRIDGE
     "secondary_id_infos": {
-        "path": "protocolSection.identificationModule.secondaryIdInfos",
-        "object_type": "array_of_dicts",
-        "table_name": "secondary_ids",
-        "bridge_table_name": "study_secondary_ids",
-        "fields": [
+        **Index Field:** "protocolSection.identificationModule.secondaryIdInfos",
+        **Object_type**: "array_of_dicts",
+        **Table_name**: "secondary_ids",
+        **Bridge_table_name**: "study_secondary_ids",
+        **Fields**: [
             ("id", "id"),
-            ("object_type", "object_type"),
+            (**Object_type**, **Object_type**),
             ("domain", "domain"),
             ("link", "link")
         ],
@@ -257,11 +351,11 @@ NESTED_FIELDS = {
 
     },
     "nct_id_aliases": {
-        "path": "protocolSection.identificationModule.nctIdAliases",
-        "object_type": "simple_array",
-        "table_name": "nct_aliases",
-        "bridge_table_name": "study_nct_aliases",
-        "field_name": "alias_nct_id",
+        **Index Field:** "protocolSection.identificationModule.nctIdAliases",
+        **Object_type**: "simple_array",
+        **Table_name**: "nct_aliases",
+        **Bridge_table_name**: "study_nct_aliases",
+        **Field_name**: "alias_nct_id",
         "transformer_method": "extract_nct_id_aliases"
     },
 
@@ -270,61 +364,61 @@ NESTED_FIELDS = {
 
 
     "condition_mesh_terms": {
-        "path": "derivedSection.conditionBrowseModule.meshes",
-        "object_type": "array_of_dicts",
-        "fields": [
+        **Index Field:** "derivedSection.conditionBrowseModule.meshes",
+        **Object_type**: "array_of_dicts",
+        **Fields**: [
             ("id", "id"),
             ("term", "term")
         ],
-        "table_name": "condition_mesh_terms",
-        "bridge_table_name": "study_conditions_mesh",
+        **Table_name**: "condition_mesh_terms",
+        **Bridge_table_name**: "study_conditions_mesh",
         "is_primary": True,
         "transformer_method": "extract_condition_mesh"
     },
 
     "condition_mesh_ancestors": {
-        "path": "derivedSection.conditionBrowseModule.ancestors",
-        "object_type": "array_of_dicts",
-        "fields": [
+        **Index Field:** "derivedSection.conditionBrowseModule.ancestors",
+        **Object_type**: "array_of_dicts",
+        **Fields**: [
             ("id", "id"),
             ("term", "term")
         ],
-        "table_name": "condition_mesh_terms",
-        "bridge_table_name": "study_conditions_mesh",
+        **Table_name**: "condition_mesh_terms",
+        **Bridge_table_name**: "study_conditions_mesh",
         "is_primary": False,
         "transformer_method": "extract_condition_mesh"
     },
 
     "intervention_mesh_terms": {
-        "path": "derivedSection.interventionBrowseModule.meshes",
-        "object_type": "array_of_dicts",
-        "fields": [
+        **Index Field:** "derivedSection.interventionBrowseModule.meshes",
+        **Object_type**: "array_of_dicts",
+        **Fields**: [
             ("id", "id"),
             ("term", "term")
         ],
-        "table_name": "intervention_mesh_terms",
-        "bridge_table_name": "study_interventions_mesh",
+        **Table_name**: "intervention_mesh_terms",
+        **Bridge_table_name**: "study_interventions_mesh",
         "is_primary": True,
         "transformer_method": "extract_intervention_mesh"
     },
 
     "intervention_mesh_ancestors": {
-        "path": "derivedSection.interventionBrowseModule.ancestors",
-        "object_type": "array_of_dicts",
-        "fields": [
+        **Index Field:** "derivedSection.interventionBrowseModule.ancestors",
+        **Object_type**: "array_of_dicts",
+        **Fields**: [
             ("id", "id"),
             ("term", "term")
         ],
-        "table_name": "intervention_mesh_terms",
-        "bridge_table_name": "study_interventions_mesh",
+        **Table_name**: "intervention_mesh_terms",
+        **Bridge_table_name**: "study_interventions_mesh",
         "is_primary": False,
         "transformer_method": "extract_intervention_mesh"
     },
 
     "large_documents": {
-        "path": "documentSection.largeDocumentModule.largeDocs",
-        "object_type": "array_of_dicts",
-        "fields": [
+        **Index Field:** "documentSection.largeDocumentModule.largeDocs",
+        **Object_type**: "array_of_dicts",
+        **Fields**: [
             ("typeAbbrev", "typeAbbrev"),
             ("hasProtocol", "hasProtocol"),
             ("hasSap", "hasSap"),
@@ -335,60 +429,60 @@ NESTED_FIELDS = {
             ("filename", "filename"),
             ("size", "size"),
         ],
-        "table_name": "study_documents",
+        **Table_name**: "study_documents",
         "transformer_method": "extract_large_documents"
     },
 
     "unposted_events": {
-        "path": "annotationSection.annotationModule.unpostedAnnotation.unpostedEvents",
-        "object_type": "array_of_dicts",
-        "fields": [
-            ("object_type", "object_type"),
+        **Index Field:** "annotationSection.annotationModule.unpostedAnnotation.unpostedEvents",
+        **Object_type**: "array_of_dicts",
+        **Fields**: [
+            (**Object_type**, **Object_type**),
             ("date", "date"),
             ("dateUnknown", "dateUnknown"),
         ],
-        "table_name": "unposted_events",
-        "bridge_table_name": "study_unposted_events",
+        **Table_name**: "unposted_events",
+        **Bridge_table_name**: "study_unposted_events",
         "transformer_method": "extract_unposted_events"
     },
 
     "violation_events": {
-        "path": "annotationSection.annotationModule.violationAnnotation.violationEvents",
-        "object_type": "array_of_dicts",
-        "fields": [
-            ("object_type", "object_type"),
+        **Index Field:** "annotationSection.annotationModule.violationAnnotation.violationEvents",
+        **Object_type**: "array_of_dicts",
+        **Fields**: [
+            (**Object_type**, **Object_type**),
             ("description", "description"),
             ("creationDate", "creationDate"),
             ("issuedDate", "issuedDate"),
             ("releaseDate", "releaseDate"),
             ("postedDate", "postedDate"),
         ],
-        "table_name": "violation_events",
-        "bridge_table_name": "study_violation_events",
+        **Table_name**: "violation_events",
+        **Bridge_table_name**: "study_violation_events",
         "transformer_method": "extract_violation_events"
     },
 
     "removed_countries": {
-        "path": "derivedSection.miscInfoModule.removedCountries",
-        "object_type": "simple_array",
-        "table_name": "countries",
-        "bridge_table_name": "study_removed_countries",
-        "field_name": "country",
+        **Index Field:** "derivedSection.miscInfoModule.removedCountries",
+        **Object_type**: "simple_array",
+        **Table_name**: "countries",
+        **Bridge_table_name**: "study_removed_countries",
+        **Field_name**: "country",
         "transformer_method": "extract_removed_countries"
     },
 
     "submission_infos": {
-        "path": "derivedSection.miscInfoModule.submissionTracking.submissionInfos",
-        "object_type": "array_of_dicts",
-        "fields": [
+        **Index Field:** "derivedSection.miscInfoModule.submissionTracking.submissionInfos",
+        **Object_type**: "array_of_dicts",
+        **Fields**: [
             ("releaseDate", "releaseDate"),
             ("unreleaseDate", "unreleaseDate"),
             ("unreleaseDateUnknown", "unreleaseDateUnknown"),
             ("resetDate", "resetDate"),
             ("mcpReleaseN", "mcpReleaseN")
         ],
-        "table_name": "submission_tracking",
-        "bridge_table_name": "study_submission_tracking",
+        **Table_name**: "submission_tracking",
+        **Bridge_table_name**: "study_submission_tracking",
         "transformer_method": "extract_submission_infos"
     },
 
