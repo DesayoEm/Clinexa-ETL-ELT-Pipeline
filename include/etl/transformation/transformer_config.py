@@ -17,6 +17,7 @@ SINGLE_FIELDS = {
 
     # Design (single values)
     "study_type": "protocolSection.designModule.studyType",
+    "patient_registry": "protocolSection.designModule.patientRegistry",
     "enrollment_type": "protocolSection.designModule.enrollmentInfo.type",
     "enrollment_count": "protocolSection.designModule.enrollmentInfo.count",
     "design_allocation": "protocolSection.designModule.designInfo.allocation",
@@ -151,28 +152,6 @@ NESTED_FIELDS = {
         "transformer_method":"extract_keywords"
     },
 
-    "interventions": {
-        "index_field": "protocolSection.armsInterventionsModule.interventions",
-        "object_type": "array_of_dicts",
-        "fields": [
-            ("intervention_name", "name"),
-            ("intervention_desc", "description"),
-            ("object_type", "object_type"),
-        ],
-        "nested": {
-            "otherNames": {
-                "object_type": "nested_simple_array",
-                "table_name": "interventions",
-                "bridge_table_name": "bridge_table_name"
-            }
-
-        },
-        "table_name": "interventions",
-        "bridge_table_name": "bridge_study_interventions",
-        "transformer_method": "extract_interventions"
-
-    },
-
     "arm_groups": {
         "index_field": "protocolSection.armsInterventionsModule.armGroups",
         "object_type": "array_of_dicts",
@@ -191,6 +170,30 @@ NESTED_FIELDS = {
         "transformer_method": "extract_arm_groups"
         }
     },
+
+
+    "interventions": {
+        "index_field": "protocolSection.armsInterventionsModule.interventions",
+        "object_type": "array_of_dicts",
+        "fields": [
+            ("intervention_name", "name"),
+            ("intervention_desc", "description"),
+            ("intervention_type", "type"),
+        ],
+        "nested": {
+            "otherNames": {
+                "object_type": "nested_simple_array",
+                "table_name": "interventions",
+                "bridge_table_name": "bridge_table_name"
+            }
+
+        },
+        "table_name": "interventions",
+        "bridge_table_name": "bridge_study_interventions",
+        "transformer_method": "extract_interventions"
+
+    },
+
 
     "locations": {
         "index_field": "protocolSection.contactsLocationsModule.locations",

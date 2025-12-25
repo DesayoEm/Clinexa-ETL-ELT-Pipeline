@@ -113,6 +113,13 @@ specifically (associated with the types of federal funding identified as OrgStud
 * INTERVENTIONAL - Interventional
 * OBSERVATIONAL - Observational
 
+
+### patient_registry
+**Index Field:** protocolSection.designModule.patientRegistry
+**Definition**: A type of observational study that collects information about patients' medical conditions and/or treatments to better understand how a condition or treatment affects patients in the real world.
+
+**DataType**: Boolean (True/False)
+
 ### enrollment_type
 **Index Field:** protocolSection.designModule.enrollmentInfo.type
 **Definition**: Enrollment type

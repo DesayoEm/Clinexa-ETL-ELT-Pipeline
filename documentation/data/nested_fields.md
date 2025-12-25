@@ -80,48 +80,12 @@
 #### Model Mapping
 - **Target Table**: `keywords`
 - **Bridge Table**: `bridge_study_keywords` 
-- **column_name**: `keyword` 
+
 
 ---
 
 ## armsInterventionsModule 
 
-### interventions
-
-**Index Field(s):** `protocolSection.armsInterventionsModule.interventions`
-
-**Object Type**: Array of Dicts
-
-**Description**: The intervention(s) associated with each arm or group; at least one intervention must be specified for interventional studies. 
-
-For observational studies, the intervention(s)/exposure(s) of interest
-
-
-#### Fields
-
-##### `name`
-- **Description**: brief descriptive name used to refer to the intervention(s) studied in each arm of the clinical study. 
-- **Data Type**: Text
-- **Limit**: 200 characters
-
-##### `description`
-- **Description**: Details that can be made public about the intervention, other than the Intervention Name(s) and Other Intervention Name(s), sufficient to distinguish the intervention from other, similar interventions studied in the same or another clinical study. 
-- **Data Type**: Text
-- **Limit**: 1000 characters
-
-#### Nested Fields
-##### `otherNames`
-- **Description**:  Other current and former name(s) or alias(es), if any, different from the Intervention Name. 
-- **Data Type**: [Text] / Simple array
-- **Limit**: 160 characters
-
-
-#### Model Mapping
-- **Target Table**: `interventions`
-- **Bridge Table**: `bridge_study_interventions` 
-
-
----
 ### arm_groups
 
 **Index Field:** `protocolSection.armsInterventionsModule.armGroups[]`
@@ -158,13 +122,14 @@ For observational studies, the intervention(s)/exposure(s) of interest
 - **Limit**: 999 characters
 - **Required**: Conditional
 
-##### `interventionNames`
+#### Nested Fields
+######  `interventionNames`
 - **Description**: Names of interventions associated with this arm. References `interventions[].name` within the same study.
 - **Data Type**: Array of Text
 - **Limit**: 200 characters per name
 - **Required**: Yes (for interventional studies)
 
----
+
 
 #### Dimensional Model Mapping
 
@@ -236,35 +201,21 @@ For observational studies, the intervention(s)/exposure(s) of interest
 
 ---
 
-### Arm ↔ Intervention Relationship
+### Arm <-->Intervention Relationship
 
-The cross-reference is bidirectional in the source data:
-- `armGroups[].interventionNames` → lists intervention names in each arm
-- `interventions[].armGroupLabels` → lists arm labels for each intervention
+**Source Data**: The API provides bidirectional references:
+- `armGroups[].interventionNames` — intervention names per arm
+- `interventions[].armGroupLabels` — arm labels per intervention
 
-**Resolution**: Use ONE of these during transformation (recommend `interventions[].armGroupLabels`), resolve the label to arm_group_key, and populate:
+**Decision**: `armGroups[].interventionNames` as the source of truth for arm interventions and interventions[] as the source of truth interventions
 
-- **Bridge Table**: `bridge_arm_group_interventions` (arm_group_key, intervention_key)
+**Rationale**:
+1. Matches analytical workflow (arm → intervention, not reverse)
+2. User-entered data may have inconsistencies between the two lists
+3. Avoids reconciliation logic and potential mismatches from bidirectional data quality issues
 
-**No snowflaking required.** The link is through labels within the same study, resolved at transformation time:
-```python
-# Pseudocode
-for intervention in study['interventions']:
-    intervention_key = hash(study_key, intervention['name'], intervention['type'])
-    
-    for arm_label in intervention['armGroupLabels']:
-        # Find matching arm in same study
-        arm = find_arm_by_label(study['armGroups'], arm_label)
-        arm_group_key = hash(study_key, arm['label'])
-        
-        # Write to bridge
-        bridge_arm_group_interventions.append({
-            'arm_group_key': arm_group_key,
-            'intervention_key': intervention_key
-        })
-```
+**Implication**: Queries for "which arms use this intervention" require joining through `bridge_arm_interventions` from the arm side. We do not model the reverse relationship from `interventions[].armGroupLabels`.
 
----
 
 
 ## contactsLocationsModule
