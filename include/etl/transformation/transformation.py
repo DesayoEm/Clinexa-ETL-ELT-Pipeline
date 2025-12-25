@@ -4,10 +4,9 @@ import logging
 import json
 from datetime import datetime
 import pandas as pd
-import pyarrow.parquet as pq
 import hashlib
 
-from transformer_config import ONE_TO_ONE_FIELDS, NESTED_FIELDS
+from transformer_config import SINGLE_FIELDS, NESTED_FIELDS
 from data_cleaning import Cleaner
 from airflow.utils.context import Context
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
@@ -29,59 +28,134 @@ class Transformer:
         combined = "|".join(str(arg) for arg in args if arg is not None)
         return hashlib.sha256(combined.encode()).hexdigest()[:16]
 
+    @staticmethod
+    def deep_get(data: dict, path: str):
+        """Safely navigate nested dict using dot notation path."""
+        keys = path.split('.')
+        value = data
+        for key in keys:
+            if isinstance(value, dict):
+                value = value.get(key)
+            else:
+                return None
+        return value
+
 
     @staticmethod
-    def remove_duplicates(df: pd.DataFrame) -> Tuple[pd.DataFrame, int]:
-        """Reusable deduplication"""
-        duplicate_count = df.duplicated().sum()
-        if duplicate_count > 0:
-            df.drop_duplicates(inplace=True)
+    def transform_all_studies(self, loc: str) -> None:
+        for study_file in loc:
+            try:
+                #pull from s3
+                df_studies = self.read_parquet(study_file)
+                self.transform_study_file(df_studies)
+                #checkpoint
 
-        return df, duplicate_count
-
-
-    def read_parquet(self, data_loc: str):
-        """Transform and load at once or in batches"""
-        try:
-            df_studies = pd.read_parquet(data_loc)
-            df_studies = pd.json_normalize(df_studies['studies'])
-
-            for study in df_studies:
-                self.extract_study_fields(study)
-
-        except Exception as e:
-            raise
+            #inner loop will fail gracefully wherever possible and errors will only raise for critical issues
+            except Exception as e:
+                raise
 
 
-    def extract_study_fields(self, df_normalized):
-        """Transform and load at once or in batches"""
-        try:
-            df_study = pd.DataFrame()
-            study_key = self.generate_key(df_normalized['protocolSection.identificationModule.nctId'])
-            if not study_key:
-                self.log.warning(f"Study missing NCT ID, skipping index {''}")
-                return
-            df_study['study_key'] = study_key
+    def transform_study_file(self, data_loc: str):
+        """
+        Transform a batch of raw study dicts in a file.
+        Args:
+            data_loc: Location of the  file
+        """
+        df_studies = pd.read_parquet(data_loc)
+        df_studies = pd.json_normalize(df_studies['studies'])
 
-            #clean specific fields
+        all_sponsors = []
+        all_study_sponsors = []
+        all_studies = []
 
-            for entity_key in NESTED_FIELDS:
-                self.extract_study_entity(NESTED_FIELDS, entity_key, study_key, df_normalized)
+        for study in df_studies:
 
-        except Exception as e:
-            raise
+            nct_id = self.deep_get(study, 'protocolSection.identificationModule.nctId')
+            if not nct_id:
+                self.log.warning("Study missing NCT ID, skipping") #log page and index
+                continue
 
-    def extract_study_entity(self, entity_map: Dict, entity_name: str, study_key: str, study_df: pd.DataFrame):
-        method_name = entity_map.get(entity_name).lower()
-        transformer_method = getattr(self, method_name)
+            study_key = self.generate_key(nct_id)
 
-        entity_df = transformer_method(study_key, study_df)
+            #study
+            study_record = self.extract_study_fields(study_key, study)
+            all_studies.append(study_record)
 
-        return entity_df
+            #sponsors
+            sponsors, study_sponsors = self.extract_sponsors(study_key, study)
+            all_sponsors.extend(sponsors)
+            all_study_sponsors.extend(study_sponsors)
+
+
+
+        #build dataframes from lists and dicts
+        df_sponsors = pd.DataFrame(all_sponsors)
+        df_study_sponsors = pd.DataFrame(all_study_sponsors)
+        df_studies = pd.DataFrame(all_studies)
+
+        # dedupe
+        df_sponsors = df_sponsors.drop_duplicates(subset=['sponsor_key'])
+
+        # load
+        return df_studies, df_sponsors, df_study_sponsors
+
+
+    def extract_study_fields(self, study_key: str, study_df: dict) -> Dict:
+        study_record = dict()
+
+        study_record['study_key'] = study_key
+        for entity_key in SINGLE_FIELDS:
+            index_field = SINGLE_FIELDS.get(entity_key)
+
+            study_record[entity_key] = self.deep_get(study_df, index_field)
+
+        return study_record
 
 
     def extract_sponsors(self, study_key: str, study_df: pd.DataFrame):
-        pass
+        df_sponsor = pd.DataFrame()
+        df_study_sponsor = pd.DataFrame()
+
+        lead_sponsor_index = NESTED_FIELDS['sponsors'].get('index_field')
+        lead_sponsor = study_df[lead_sponsor_index]
+
+        sponsor_key = self.generate_key(lead_sponsor.get('name'), lead_sponsor.get('class'))
+
+        df_sponsor['sponsor_key'] = sponsor_key
+        df_sponsor['name'] = lead_sponsor.get('name')
+        df_sponsor['class'] = lead_sponsor.get('class')
+
+
+        df_study_sponsor['sponsor_key'] = sponsor_key
+        df_study_sponsor['study_key'] = study_key
+        df_study_sponsor['is_lead'] = True
+
+
+        #Extract collaborators
+        collaborator_index = NESTED_FIELDS['collaborators'].get('index_field')
+        collaborators = study_df[collaborator_index]
+
+        for collaborator in collaborators:
+            collaborator_key = self.generate_key(collaborator.get('name'), collaborator.get('class'))
+            df_sponsor['sponsor_key'] = collaborator_key
+            df_sponsor['name'] = collaborator.get('name')
+            df_sponsor['class'] = collaborator.get('class')
+
+            df_study_sponsor['sponsor_key'] = sponsor_key
+            df_study_sponsor['study_key'] = study_key
+            df_study_sponsor['is_lead'] = False
+
+
+
+
+
+
+
+
+
+
+
+
 
     def extract_conditions(self, study_key: str, study_df: pd.DataFrame):
         pass

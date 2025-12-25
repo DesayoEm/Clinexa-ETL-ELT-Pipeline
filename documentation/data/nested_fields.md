@@ -122,95 +122,286 @@ For observational studies, the intervention(s)/exposure(s) of interest
 
 
 ---
-
 ### arm_groups
 
-**Index Field(s):** `protocolSection.armsInterventionsModule.armGroups`
+**Index Field:** `protocolSection.armsInterventionsModule.armGroups[]`
 
-**Object Type**: Array of Dicts
+**Object Type**: Array of dicts
 
-**Description**: A description of each arm of the clinical trial that indicates its role in the clinical trial
+**Description**: Pre-specified group or subgroup of participants assigned to receive specific intervention(s) (or no intervention) according to protocol. For interventional studies only. Observational studies use Groups/Cohorts with the same structure but different semantics.
 
+---
 
 #### Fields
 
 ##### `label`
-- **Description**: The short name used to identify the arm.
+- **Description**: Short name used to identify the arm
 - **Data Type**: Text
 - **Limit**: 100 characters
+- **Required**: Yes
 
 ##### `type`
-- **Description**: The role of each arm in the clinical trial.
+- **Description**: The role of the arm in the clinical trial
 - **Data Type**: Enum(ArmGroupType)
-- **Source Values**: 
-
-- * EXPERIMENTAL - Experimental
-- * ACTIVE_COMPARATOR - Active Comparator
-- * PLACEBO_COMPARATOR - Placebo Comparator
-- * SHAM_COMPARATOR - Sham Comparator
-- * NO_INTERVENTION - No Intervention
-- * OTHER - Other
-
+- **Required**: Yes
+- **Enum Values**:
+  - `EXPERIMENTAL` — Experimental
+  - `ACTIVE_COMPARATOR` — Active Comparator
+  - `PLACEBO_COMPARATOR` — Placebo Comparator
+  - `SHAM_COMPARATOR` — Sham Comparator
+  - `NO_INTERVENTION` — No Intervention
+  - `OTHER` — Other
 
 ##### `description`
-- **Description**:  Additional descriptive information (including which interventions are administered in each arm) to differentiate each arm from other arms in the clinical trial.
-- **Data Type**: Text
+- **Description**: Additional descriptive information to differentiate this arm from others (including which interventions are administered)
+- **Data Type**: Markup
 - **Limit**: 999 characters
+- **Required**: Conditional
 
-
-#### Nested Fields
 ##### `interventionNames`
-- **Description**:  A brief descriptive name used to refer to the intervention(s) studied in each arm of the clinical study. 
-- **Data Type**: [Text] / Simple array
+- **Description**: Names of interventions associated with this arm. References `interventions[].name` within the same study.
+- **Data Type**: Array of Text
+- **Limit**: 200 characters per name
+- **Required**: Yes (for interventional studies)
+
+---
+
+#### Dimensional Model Mapping
+
+- **Bridge Table**: `bridge_study_arm_groups` 
+- **Surrogate Key**: `hash(study_key, label)`
+
+
+---
+
+### interventions
+
+**Index Field:** `protocolSection.armsInterventionsModule.interventions[]`
+
+**Object Type**: Array of dicts
+
+**Description**: The intervention(s) studied in the clinical trial. For interventional studies, at least one required. For observational studies, specifies interventions/exposures of interest if any.
+
+---
+
+#### Fields
+
+##### `name`
+- **Description**: Brief descriptive name for the intervention. Non-proprietary name required if available.
+- **Data Type**: Text
 - **Limit**: 200 characters
+- **Required**: Yes
 
+##### `type`
+- **Description**: General type of intervention
+- **Data Type**: Enum(InterventionType)
+- **Required**: Yes
+- **Enum Values**:
+  - `DRUG` — Drug (including placebo)
+  - `DEVICE` — Device (including sham)
+  - `BIOLOGICAL` — Biological/Vaccine
+  - `PROCEDURE` — Procedure/Surgery
+  - `RADIATION` — Radiation
+  - `BEHAVIORAL` — Behavioral (e.g., psychotherapy, lifestyle counseling)
+  - `GENETIC` — Genetic (gene transfer, stem cell, recombinant DNA)
+  - `DIETARY_SUPPLEMENT` — Dietary Supplement (vitamins, minerals)
+  - `COMBINATION_PRODUCT` — Combination Product (drug+device, biological+device, etc.)
+  - `DIAGNOSTIC_TEST` — Diagnostic Test (imaging, in vitro)
+  - `OTHER` — Other
 
-#### Model Mapping
-- **Target Table**: `study_arms`
-- **Bridge Table**: `bridge_study_arms` 
+##### `description`
+- **Description**: Details sufficient to distinguish this intervention from similar ones (e.g., dosage form, dosage, frequency, duration for drugs)
+- **Data Type**: Markup
+- **Limit**: 1,000 characters
+- **Required**: Yes
 
-#how do arms tie back to interventions?
+##### `armGroupLabels`
+- **Description**: Labels of arm groups that receive this intervention. References `armGroups[].label` within the same study.
+- **Data Type**: Array of Text
+- **Required**: Yes (if multiple arms exist)
 
+##### `otherNames`
+- **Description**: Other current/former names or aliases (brand names, serial numbers)
+- **Data Type**: Array of Text
+- **Limit**: 200 characters per name
+- **Required**: No
+
+---
+
+#### Dimensional Model Mapping
+
+- **Target Table**: `dim_interventions`
+- **Surrogate Key**: `hash(study_key, name, type)`
+- **Bridge Table**: `bridge_study_interventions` (study_key, intervention_key)
+
+---
+
+### Arm ↔ Intervention Relationship
+
+The cross-reference is bidirectional in the source data:
+- `armGroups[].interventionNames` → lists intervention names in each arm
+- `interventions[].armGroupLabels` → lists arm labels for each intervention
+
+**Resolution**: Use ONE of these during transformation (recommend `interventions[].armGroupLabels`), resolve the label to arm_group_key, and populate:
+
+- **Bridge Table**: `bridge_arm_group_interventions` (arm_group_key, intervention_key)
+
+**No snowflaking required.** The link is through labels within the same study, resolved at transformation time:
+```python
+# Pseudocode
+for intervention in study['interventions']:
+    intervention_key = hash(study_key, intervention['name'], intervention['type'])
+    
+    for arm_label in intervention['armGroupLabels']:
+        # Find matching arm in same study
+        arm = find_arm_by_label(study['armGroups'], arm_label)
+        arm_group_key = hash(study_key, arm['label'])
+        
+        # Write to bridge
+        bridge_arm_group_interventions.append({
+            'arm_group_key': arm_group_key,
+            'intervention_key': intervention_key
+        })
+```
 
 ---
 
 
 ## contactsLocationsModule
 
-    "locations": {
-        **Index Field:** "protocolSection.contactsLocationsModule.locations",
-        **Object_type**: "array_of_dicts",
-        **Table_name**: "sites",
-        **Bridge_table_name**: "study_sites",
-        **Fields**: [
-            ("site_facility", "facility"),
-            ("city", "city"),
-            ("state", "state"),
-            ("zip", "zip"),
-            ("country", "country"),
-            ("site_status", "status"),
-        ],
-        "nested": {
-            "geoPoint": {
-                **Object_type**: "simple_array",
-                 **Fields**: ["lat", "lon"],
-            },
+#### locations
 
-            "contacts": {
-                **Object_type**: "nested_array_of_dicts",
-                **Table_name**: "contacts",
-                **Bridge_table_name**: "location_contacts",
-                **Fields**: [
-                    ("name", "name"),
-                    ("role", "role"),
-                    ("email", "email"),
-                    ("phone", "phone"),
-                    ("phoneExt", "phoneExt")
-                ]
-            }
-        },
-        "transformer_method": "extract_contacts"
-    },
+**Index Field(s):** `protocolSection.contactsLocationsModule.locations`
+
+**Object Type**: Array of Dicts
+
+**Description**: Participating facility in a clinical study
+
+##### `facility`
+- **Description**: ull name of the organization where the clinical study is being conducted
+- **Data Type**: Text
+- **Limit**: 254 characters
+
+##### `city`
+- **Description**: City
+- **Data Type**: GeoName
+
+##### `state`
+- **Description**: State/Province. Required for U.S. locations (including territories of the United States)
+- **Data Type**: GeoName
+
+##### `zip`
+- **Description**: ZIP/Postal Code. Required for U.S. locations (including territories of the United States)
+- **Data Type**: GeoName
+
+##### `geoPoint`
+- **Description**: Lat and Lon
+- **Data Type**: Dict
+
+##### `status`
+- **Description**: Individual Site Status 
+- **Data Type**: Enum(RecruitmentStatus)
+- **Enum Values**:
+  - `ACTIVE_NOT_RECRUITING` - Active, not recruiting
+  - `COMPLETED` - Completed
+  - `ENROLLING_BY_INVITATION` - Enrolling by invitation
+  - `NOT_YET_RECRUITING` - Not yet recruiting
+  - `RECRUITING` - Recruiting
+  - `SUSPENDED` - Suspended
+  - `TERMINATED` - Terminated
+  - `WITHDRAWN` - Withdrawn
+  - `AVAILABLE` - Available
+
+#### Nested Fields
+##### `contacts`
+###### modelled at central contacts level
+- #### Model Mapping
+- **Target Table**: `contacts`
+- **Bridge Table**: `bridge_study_site_contacts` 
+
+
+#### Model Mapping
+- **Target Table**: `study_sites`
+- **Bridge Table**: `bridge_study_sites` 
+
+
+
+
+### central_contacts
+
+**Index Field:** `protocolSection.contactsLocationsModule.centralContacts[]`
+
+**Definition**: Contact person(s) for general enrollment questions across all study locations. Required if no facility-level contacts provided.
+
+**Object Type**: Array of dicts
+
+**Cardinality**: 0 to many (but at least one central OR facility contact required per study)
+
+---
+
+#### Fields
+
+##### `name`
+- **Description**: Name or title of contact person
+- **Data Type**: Text
+- **Required**: Yes
+
+##### `role`
+- **Description**: Role of the contact
+- **Data Type**: Enum(CentralContactRole)
+- **Values**: `CONTACT`, `PRINCIPAL_INVESTIGATOR`, etc.
+
+##### `phone`
+- **Description**: Telephone number (preferably toll-free)
+- **Data Type**: Text
+- **Required**: Yes
+
+##### `phoneExt`
+- **Description**: Phone extension
+- **Data Type**: Text
+- **Required**: No
+
+##### `email`
+- **Description**: Email address
+- **Data Type**: Text
+- **Required**: Yes
+
+---
+
+#### Dimensional Model Mapping
+
+- **Target Table**: `dim_contacts`
+- **Bridge Table**: `bridge_study_contacts` (study_key, contact_key)
+- **Surrogate Key**: `hash(study_key, name, role, contact_type)`
+- **Contact Type**: `CENTRAL` (discriminator)
+- 
+
+---
+
+### site_contacts
+
+**Index Field:** `protocolSection.contactsLocationsModule.locations[].contacts[]`
+
+**Definition**: Contact person(s) for enrollment questions at a specific facility. Required if no central contact provided.
+
+**Object Type**: Nested array of dicts (under locations)
+
+**Cardinality**: 0 to many per site
+
+---
+
+#### Fields
+
+(same as central_contacts)
+
+---
+
+#### Dimensional Model Mapping
+
+- **Target Table**: `dim_contacts`
+- **Surrogate Key**: `hash(site_key, name, role, contact_type)`
+- **Contact Type**: `SITE` (discriminator)
+- **Bridge Table**: `bridge_site_contacts` (site_key, contact_key)
 
     "central_contacts": {
         **Index Field:** "protocolSection.contactsLocationsModule.centralContacts",

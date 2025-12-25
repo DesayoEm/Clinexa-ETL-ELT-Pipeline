@@ -62,13 +62,7 @@ Also known as ClinicalTrials.gov Identifier
 
 **DataType**: Enum(OrgStudyIdType)
 
-**Source Values**: 
-* NIH - U.S. NIH Grant/Contract
-* FDA - U.S. FDA Grant/Contract
-* VA - U.S. VA Grant/Contract
-* CDC - U.S. CDC Grant/Contract
-* AHRQ - U.S. AHRQ Grant/Contract
-* SAMHSA - U.S. SAMHSA Grant/Contract
+
 
 
 ### org_study_link
@@ -85,13 +79,24 @@ specifically (associated with the types of federal funding identified as OrgStud
 
 **Limit**: 5,000  characters.
 
+
+### responsible_party
+- **Index Field:** protocolSection.sponsorCollaboratorsModule.responsibleParty
+- **Definition**: An indication of whether the responsible party is the sponsor, the sponsor-investigator, or a principal investigator designated by the sponsor to be the responsible party
+- **DataType**: Dict{Enum(ResponsiblePartyType)} # single value
+
+- **Source Values**: 
+* * SPONSOR - Sponsor
+* * PRINCIPAL_INVESTIGATOR - Principal Investigator
+* * SPONSOR_INVESTIGATOR - Sponsor-Investigator
+
+
 ### detailed_desc
 **Index Field:** protocolSection.descriptionModule.detailedDescription
 
-**Definition**: Extended description of the protocol, including more technical information (as compared to the Brief Summary), if desired. Do not include the entire protocol
+**Definition**: Extended description of the protocol, including more technical information (as compared to the Brief Summary), if desired. Does not include the entire protocol
 
 **Limit**: 32,000  characters.
-
 
 
 

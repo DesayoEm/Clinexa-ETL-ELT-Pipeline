@@ -1,4 +1,4 @@
-ONE_TO_ONE_FIELDS = {
+SINGLE_FIELDS = {
     # Identification
     "nct_id": "protocolSection.identificationModule.nctId",
     "brief_title": "protocolSection.identificationModule.briefTitle",
@@ -11,6 +11,9 @@ ONE_TO_ONE_FIELDS = {
     # Description
     "brief_summary": "protocolSection.descriptionModule.briefSummary",
     "detailed_desc": "protocolSection.descriptionModule.detailedDescription",
+
+    # ResponsibleParty
+    "responsible_party": "protocolSection.sponsorCollaboratorsModule.responsibleParty.type",
 
     # Design (single values)
     "study_type": "protocolSection.designModule.studyType",
@@ -104,10 +107,9 @@ ONE_TO_ONE_FIELDS = {
     "sub_tracking_first_mcp_type": "derivedSection.miscInfoModule.submissionTracking.firstMcpInfo.postDateStruct.type",
 }
 
-
 NESTED_FIELDS = {
 
-  "sponsors": {
+   "sponsors": {
         "index_field": "protocolSection.sponsorCollaboratorsModule.leadSponsor",
         "object_type": "simple dict",
         "fields": [
@@ -205,7 +207,7 @@ NESTED_FIELDS = {
         ],
         "nested": {
             "geoPoint": {
-                "object_type": "simple_array",
+                "object_type": "simple_dict",
                  "fields": ["lat", "lon"],
             },
 
@@ -219,10 +221,11 @@ NESTED_FIELDS = {
                     ("email", "email"),
                     ("phone", "phone"),
                     ("phoneExt", "phoneExt")
-                ]
+                ],
+                "transformer_method": "extract_contacts"
             }
         },
-        "transformer_method": "extract_contacts"
+        "transformer_method": "extract_locations"
     },
 
     "central_contacts": {
