@@ -1,7 +1,5 @@
 from typing import Dict, List, Any, Hashable, Tuple
-import io
 import logging
-import json
 from datetime import datetime
 import pandas as pd
 import hashlib
@@ -29,25 +27,28 @@ class Transformer:
         return hashlib.sha256(combined.encode()).hexdigest()[:16]
 
     @staticmethod
-    def deep_get(data: dict, path: str):
-        """Safely navigate nested dict using dot notation path."""
+    def deep_get(data, path: str):
+        """Navigate nested dict using dot separated path, or flat Series/dict."""
+        if isinstance(data, pd.Series):
+            return data.get(path)
+
+        # dict navigation
         keys = path.split('.')
         value = data
         for key in keys:
-            if isinstance(value, dict) or isinstance(value, list):
+            if isinstance(value, dict):
                 value = value.get(key)
             else:
                 return None
         return value
 
 
-    @staticmethod
-    def transform_all_studies(self, loc: str) -> None:
-        for study_file in loc:
+    def transform_all_studies(self, folder: str) -> None:
+        for study_file in folder:
+            study_file_loc = ""
             try:
                 #pull from s3
-                df_studies = self.read_parquet(study_file)
-                self.transform_study_file(df_studies)
+                self.transform_study_file(study_file_loc)
                 #checkpoint
 
             #inner loop will fail gracefully wherever possible and errors will only raise for critical issues
@@ -61,9 +62,6 @@ class Transformer:
         Args:
             data_loc: Location of the  file
         """
-        df_studies = pd.read_parquet(data_loc)
-        df_studies = pd.json_normalize(df_studies['studies'])
-
         all_studies = []
         all_sponsors = []
         all_study_sponsors = []
@@ -80,6 +78,9 @@ class Transformer:
         all_interventions = []
         all_interventions_other_names = []
         all_study_interventions = []
+
+        df_studies = pd.read_parquet(data_loc)
+        df_studies = pd.json_normalize(df_studies['studies'])
 
 
         for study in df_studies:
@@ -124,9 +125,11 @@ class Transformer:
 
 
         #build dataframes from lists
+        df_studies = pd.DataFrame(all_studies)
+
         df_sponsors = pd.DataFrame(all_sponsors)
         df_study_sponsors = pd.DataFrame(all_study_sponsors)
-        df_studies = pd.DataFrame(all_studies)
+
 
         df_conditions = pd.DataFrame(all_conditions)
         df_study_conditions=pd.DataFrame(all_study_conditions)

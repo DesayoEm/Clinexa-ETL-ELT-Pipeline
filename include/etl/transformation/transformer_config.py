@@ -5,14 +5,17 @@ SINGLE_FIELDS = {
     "official_title": "protocolSection.identificationModule.officialTitle",
     "acronym": "protocolSection.identificationModule.acronym",
     "org_study_id": "protocolSection.identificationModule.orgStudyIdInfo.id",
-    "org_study_type": "protocolSection.identificationModule.orgStudyIdInfo.type",
-    "org_study_link": "protocolSection.identificationModule.orgStudyIdInfo.link",
 
     # Description
     "brief_summary": "protocolSection.descriptionModule.briefSummary",
     "detailed_desc": "protocolSection.descriptionModule.detailedDescription",
 
-    # ResponsibleParty
+    #Organisation
+    "org_name": "protocolSection.identificationModule.organization.fullName",
+    "org_class": "protocolSection.identificationModule.organization.class",
+
+
+    # Sponsor
     "responsible_party": "protocolSection.sponsorCollaboratorsModule.responsibleParty.type",
 
     # Design (single values)
@@ -27,13 +30,6 @@ SINGLE_FIELDS = {
     "design_observational_model": "protocolSection.designModule.designInfo.observationalModel",
     "design_time_perspective": "protocolSection.designModule.designInfo.timePerspective",
     "design_masking": "protocolSection.designModule.designInfo.maskingInfo.masking",
-    "design_masking_desc": "protocolSection.designModule.designInfo.maskingInfo.maskingDescription",
-    "design_who_masked": "protocolSection.designModule.designInfo.maskingInfo.whoMasked",
-
-    # Expanded access
-    "exp_acc_type_individual": "protocolSection.designModule.expandedAccessTypes.individual",
-    "exp_acc_type_intermediate": "protocolSection.designModule.expandedAccessTypes.intermediate",
-    "exp_acc_type_treatment": "protocolSection.designModule.expandedAccessTypes.treatment",
 
     # Biospecimen
     "biospec_retention": "protocolSection.designModule.bioSpec.retention",
@@ -43,8 +39,6 @@ SINGLE_FIELDS = {
     "eligibility_criteria": "protocolSection.eligibilityModule.eligibilityCriteria",
     "healthy_volunteers": "protocolSection.eligibilityModule.healthyVolunteers",
     "sex": "protocolSection.eligibilityModule.sex",
-    "gender_based": "protocolSection.eligibilityModule.genderBased",
-    "gender_desc": "protocolSection.eligibilityModule.genderDescription",
     "min_age": "protocolSection.eligibilityModule.minimumAge",
     "max_age": "protocolSection.eligibilityModule.maximumAge",
     "population_desc": "protocolSection.eligibilityModule.studyPopulation",
@@ -54,11 +48,9 @@ SINGLE_FIELDS = {
     "overall_status": "protocolSection.statusModule.overallStatus",
     "last_known_status": "protocolSection.statusModule.lastKnownStatus",
     "status_verified_date": "protocolSection.statusModule.statusVerifiedDate",
-    "delayed_posting": "protocolSection.statusModule.delayedPosting",
     "start_date": "protocolSection.statusModule.startDateStruct.date",
     "start_date_type": "protocolSection.statusModule.startDateStruct.type",
     "first_submit_date": "protocolSection.statusModule.studyFirstSubmitDate",
-    "first_submit_qc_date": "protocolSection.statusModule.studyFirstSubmitQcDate",
     "last_update_submit_date": "protocolSection.statusModule.lastUpdateSubmitDate",
     "completion_date": "protocolSection.statusModule.completionDateStruct.date",
     "completion_date_type": "protocolSection.statusModule.completionDateStruct.type",
@@ -79,21 +71,17 @@ SINGLE_FIELDS = {
     "ipd_access_criteria": "protocolSection.ipdSharingStatementModule.accessCriteria",
     "ipd_url": "protocolSection.ipdSharingStatementModule.url",
 
-    # Large documents
-    "large_doc_no_sap": "documentSection.largeDocumentModule.noSap",
-
     # Miscellaneous
     "version_holder": "derivedSection.miscInfoModule.versionHolder",
     "has_results": "hasResults",
     "last_updated": "protocolSection.statusModule.lastUpdatePostDateStruct.date",
-    "unposted_responsible_party": "annotationSection.annotationModule.unpostedAnnotation.unpostedResponsibleParty",
     "limitations_desc": "resultsSection.moreInfoModule.limitationsAndCaveats.description",
 
     # Certain agreements
     "certain_agreement_pi_sponsor_employee": "resultsSection.moreInfoModule.certainAgreement.piSponsorEmployee",
-    "certain_agreement_restriction_type": "resultsSection.moreInfoModule.certainAgreement.restrictionType",
     "certain_agreement_restrictive": "resultsSection.moreInfoModule.certainAgreement.restrictiveAgreement",
     "certain_agreement_other_details": "resultsSection.moreInfoModule.certainAgreement.otherDetails",
+    "certain_agreement_restriction_type": "resultsSection.moreInfoModule.certainAgreement.restrictionType",
 
     # Point of contact
     "poc_title": "resultsSection.moreInfoModule.pointOfContact.title",
@@ -104,8 +92,7 @@ SINGLE_FIELDS = {
 
     # Submission tracking
     "sub_tracking_estimated_results_date": "derivedSection.miscInfoModule.submissionTracking.estimatedResultsFirstSubmitDate",
-    "sub_tracking_first_mcp_date": "derivedSection.miscInfoModule.submissionTracking.firstMcpInfo.postDateStruct.date",
-    "sub_tracking_first_mcp_type": "derivedSection.miscInfoModule.submissionTracking.firstMcpInfo.postDateStruct.type",
+
 }
 
 NESTED_FIELDS = {
@@ -193,7 +180,7 @@ NESTED_FIELDS = {
         "transformer_method": "extract_interventions"
 
     },
-
+"design_who_masked": "protocolSection.designModule.designInfo.maskingInfo.whoMasked",
 
     "locations": {
         "index_field": "protocolSection.contactsLocationsModule.locations",

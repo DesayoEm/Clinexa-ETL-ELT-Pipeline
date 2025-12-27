@@ -217,6 +217,19 @@
 **Implication**: Queries for "which arms use this intervention" require joining through `bridge_arm_interventions` from the arm side. We do not model the reverse relationship from `interventions[].armGroupLabels`.
 
 
+### design_who_masked
+**Index Field:** protocolSection.designModule.designInfo.maskingInfo.whoMasked
+
+**Definition**: The party or parties involved in the clinical trial who are prevented from having knowledge of the interventions assigned to individual participants
+
+**DataType**: [Enum(WhoMasked)]
+
+**Source Values**:
+* PARTICIPANT - Participant
+* CARE_PROVIDER - Care Provider
+* INVESTIGATOR - Investigator
+* OUTCOMES_ASSESSOR - Outcomes Assessor
+
 
 ## contactsLocationsModule
 
