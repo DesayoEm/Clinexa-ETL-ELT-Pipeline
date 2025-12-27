@@ -325,10 +325,10 @@ class Extractor:
              - current_page is used for logging only; progress tracking uses last_saved_page
              - The infinite while loop breaks when no next_page_token is found
              - Previous token tracking enables verification that all data was extracted
-             - Rate limiting is applied before each request to prevent API throttling
+             - Rate limit check is ran before each request to prevent API throttling
         """
 
-        while True:  # test volume
+        while self.last_saved_page < 2:  # test volume
             current_page = self.last_saved_page + 1
             # current page is used for logging and error reporting within the namespace of this function, and
             # not for tracking progress. progress is tracked by self.last_saved_page
