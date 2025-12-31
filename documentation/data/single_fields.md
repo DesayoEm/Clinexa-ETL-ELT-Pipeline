@@ -296,7 +296,7 @@ Bulleted list for each criterion below the headers "Inclusion Criteria" and "Exc
    If at least one facility in a multi-site clinical study has an Individual Site Status of "Recruiting," then the Overall Recruitment Status for the study must be "Recruiting."
 
 - **DataType**: Enum (Status)
-**Source Values**:
+**Enum Values**:
 
 - * ACTIVE_NOT_RECRUITING - Active, not recruiting
 - * COMPLETED - Completed
@@ -476,19 +476,72 @@ Information about who will review requests and criteria for reviewing requests m
 
 
 
+## participant flow
 
-## Miscellaneous
+### flow_pre_assignment_details
+- **Index Field:** `resultsSection.participantFlowModule.preAssignmentDetails`
+- **Definition**: T Description of significant events in the study (for example, wash out, run-in) that occur after participant enrollment, but prior to assignment of participants to an arm or group, if any
+- **DataType**: Text
+- **Limit**: 500 characters.
 
-### version_holder
-- **Index Field:** `derivedSection.miscInfoModule.versionHolder`
-- **Definition**: The most recent date where Ingest ran successfully
+
+### flow_recruitment_details
+- **Index Field:** `resultsSection.participantFlowModule.recruitmentDetails`
+- **Definition**: Key information relevant to the recruitment process for the overall study, 
+      such as dates of the recruitment period and types of location (For example, medical clinic), to provide context.
+- **DataType**: Text
+- **Limit**: 500 characters.
+
+
+### flow_type_units_analysed
+- **Index Field:** `resultsSection.participantFlowModule.typeUnitsAnalyzed`
+- **Definition**: If assignment is based on a unit other than participants, a description of the unit of assignment (for example, eyes, lesions, implants).
+- **DataType**: Text
+- **Limit**: 40 characters.
+
+
+## Point of contact
+
+### poc_title
+- **Index Field:** `resultsSection.moreInfoModule.pointOfContact.title`
+- **Definition**: The person who is designated the point of contact.
+This may be a specific person's name (for example, Dr. Jane Smith) or a position title (for example, Director of Clinical Trials).
+- **DataType**: Text
+
+
+### poc_organization
+- **Index Field:** `resultsSection.moreInfoModule.pointOfContact.organization`
+- **Definition**: Full name of the designated individual's organizational affiliation.
+- **DataType**: Text
+
+
+### poc_email
+- **Index Field:** `resultsSection.moreInfoModule.pointOfContact.email`
+- **Definition**: Electronic mail address of the designated individual.
+- **DataType**: Text
+
+
+### poc_phone
+- **Index Field:** `resultsSection.moreInfoModule.pointOfContact.phone`
+- **Definition**: Office phone number of the designated individual. Format 123-456-7890 within the United States and Canada. 
+
+If outside the United States and Canada, the full phone number, including the country code is provided.
+
+**DataType**: Text
+
+
+### poc_phone_ext
+- **Index Field:** `resultsSection.moreInfoModule.pointOfContact.phoneExt`
+- **Definition**: Phone extension, if needed
+
+
+## Submission tracking
+
+### sub_tracking_estimated_results_date
+- **Index Field:** `derivedSection.miscInfoModule.submissionTracking.estimatedResultsFirstSubmitDate`
+- **Definition**: Results First Submitted Date but not yet Posted (e.g., still under QC review).
 - **DataType**: NormalizedDate 
 
-
-### has_results
-- **Index Field:** `hasResults`
-- **Definition**: Flag that indicates if a study has posted results on public site
-- **DataType**: Boolean (Yes/No)
 
 
 ### last_updated
@@ -543,49 +596,16 @@ The type that represents the most restrictive of the agreements is used If there
 **Limit**: 500 characters.
 
 
-  
+## Miscellaneous
 
-## Point of contact
-
-### poc_title
-- **Index Field:** `resultsSection.moreInfoModule.pointOfContact.title`
-- **Definition**: The person who is designated the point of contact.
-This may be a specific person's name (for example, Dr. Jane Smith) or a position title (for example, Director of Clinical Trials).
-- **DataType**: Text
-
-
-### poc_organization
-- **Index Field:** `resultsSection.moreInfoModule.pointOfContact.organization`
-- **Definition**: Full name of the designated individual's organizational affiliation.
-- **DataType**: Text
-
-
-### poc_email
-- **Index Field:** `resultsSection.moreInfoModule.pointOfContact.email`
-- **Definition**: Electronic mail address of the designated individual.
-- **DataType**: Text
-
-
-### poc_phone
-- **Index Field:** `resultsSection.moreInfoModule.pointOfContact.phone`
-- **Definition**: Office phone number of the designated individual. Format 123-456-7890 within the United States and Canada. 
-
-If outside the United States and Canada, the full phone number, including the country code is provided.
-
-**DataType**: Text
-
-
-### poc_phone_ext
-- **Index Field:** `resultsSection.moreInfoModule.pointOfContact.phoneExt`
-- **Definition**: Phone extension, if needed
-
-
-## Submission tracking
-
-### sub_tracking_estimated_results_date
-- **Index Field:** `derivedSection.miscInfoModule.submissionTracking.estimatedResultsFirstSubmitDate`
-- **Definition**: Results First Submitted Date but not yet Posted (e.g., still under QC review).
+### version_holder
+- **Index Field:** `derivedSection.miscInfoModule.versionHolder`
+- **Definition**: The most recent date where Ingest ran successfully
 - **DataType**: NormalizedDate 
 
 
+### has_results
+- **Index Field:** `hasResults`
+- **Definition**: Flag that indicates if a study has posted results on public site
+- **DataType**: Boolean (Yes/No)
 

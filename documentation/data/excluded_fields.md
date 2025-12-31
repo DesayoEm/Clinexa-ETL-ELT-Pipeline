@@ -176,3 +176,28 @@ It is the responsibility of the sponsor or investigator to ensure that the study
 - **Reason**: Officials lack contact information and serve administrative/ oversight purposes only. patient matching relies on location contacts, not officials
 
 
+## References
+
+### references
+-**Index Field:** `protocolSection.referencesModule.references`
+-**Definition**: Citations to publications related to the protocol
+- **DataType**: Reference[]
+
+#### Fields
+##### `citations`
+- **Description**: PubMed identifier for the citation in MEDLINE
+- **Data Type**: Text
+- **Required**: Yes
+- **Reason**: No analytical value
+
+##### `retractions`
+- **Description**: retractions of the citation
+- **Data Type**: Text
+- **Required**: Yes
+- **Reason**: No analytical value
+
+
+### baseline_measures_module
+- **Index Field**: `resultsSection.baselineMeasuresModule`
+- **Description**: A table of demographic and baseline measures and data collected by arm or comparison group and for the entire population of participants in the clinical study.
+- **Reason for Exclusion**: No analytical value. Documentation/compliance data

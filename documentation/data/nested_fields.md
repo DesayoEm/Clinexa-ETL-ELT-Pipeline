@@ -212,7 +212,7 @@
 **Decision**: `armGroups[].interventionNames` as the source of truth for arm interventions and interventions[] as the source of truth interventions
 
 **Rationale**:
-1. Matches analytical workflow (arm → intervention, not reverse)
+1. Matches analytical workflow (arm -> intervention, not reverse)
 2. User-entered data may have inconsistencies between the two lists
 3. Avoids reconciliation logic and potential mismatches from bidirectional data quality issues
 
@@ -226,7 +226,7 @@
 
 **DataType**: [Enum(WhoMasked)]
 
-**Source Values**:
+**Enum Values**:
 * PARTICIPANT - Participant
 * CARE_PROVIDER - Care Provider
 * INVESTIGATOR - Investigator
@@ -263,6 +263,19 @@
   - `WITHDRAWN` - Withdrawn
   - `AVAILABLE` - Available
 
+    
+**LOCATION STATUS RESOLUTION**
+
+Location-level statuses can be inconsistent/outdated. Use study-level overall_status as the authoritative source:
+
+1. Study COMPLETED/TERMINATED -> inherit study status (can't recruit)
+2. Study NOT_YET_RECRUITING -> inherit study status (hasn't started)
+3. Study RECRUITING + conflicting locations AND one is RECRUITING -> UNCLEAR
+4. Study RECRUITING + no location says RECRUITING -> use location status
+
+This ensures patient matching prioritizes study-level recruitment status while flagging ambiguous cases.
+"""
+
 ##### `city`
 - **Description**: City
 - **Data Type**: GeoName
@@ -291,18 +304,14 @@ Avoids snowflaking the schema while preserving all contact information for downs
 - **Target Table**: `locations`
 - **Bridge Table**: `bridge_study_locations` 
 
-
-
+--- 
 
 ### central_contacts
 
-**Index Field:** `protocolSection.contactsLocationsModule.centralContacts[]`
-
-**Definition**: Contact person(s) for general enrollment questions across all study locations. Required if no facility-level contacts provided.
-
-**Object Type**: Array of dicts
-
-**Cardinality**: 0 to many (but at least one central OR facility contact required per study)
+- **Index Field:** `protocolSection.contactsLocationsModule.centralContacts[]`
+- **Definition**: Contact person(s) for general enrollment questions across all study locations. Required if no facility-level contacts provided.
+- **Object Type**: Array of dicts
+- **Cardinality**: 0 to many (but at least one central OR facility contact required per study)
 
 ---
 
@@ -342,6 +351,211 @@ Avoids snowflaking the schema while preserving all contact information for downs
 - **Surrogate Key**: `hash(study_key, name, role, phone)`
 
 ---
+
+
+## References
+
+### references
+- **Index Field:** `protocolSection.referencesModule.references`
+- **Definition**: Citations to publications related to the protocol
+- **DataType**: Reference[]
+
+#### Fields
+
+##### `pmid`
+- **Description**: PubMed identifier for the citation in MEDLINE
+- **Data Type**: Text
+- **Required**: Yes
+
+##### `type`
+- **Description**: Reference type
+- **Data Type**: Enum(ReferenceType)
+**Enum Values**:
+- PARTICIPANT - Participant
+- BACKGROUND - background
+- RESULT - result
+- DERIVED - derived
+
+##### `citations`
+- **Description**: PubMed identifier for the citation in MEDLINE
+- **Data Type**: Text
+- **Required**: Yes
+
+### see_also
+- **Index Field:** `protocolSection.referencesModule.seeAlsoLinks`
+- **Definition**:  A website directly relevant to the protocol 
+- **DataType**: SeeAlsoLink[]
+
+#### Fields
+
+##### `label`
+- **Description**: Title or brief description of the linked page.
+- **Data Type**: Text
+- **Limit**: 254 characters.
+
+##### `url`
+- **Description**: Complete URL, including http:// or https:
+- **Data Type**: Text
+- **Limit**: 3,999 characters.
+
+
+
+### availIpds
+- **Index Field:** `protocolSection.referencesModule.availIpds`
+- **Definition**: Available individual participant data (IPD) sets and supporting information that are being shared for the study.
+- **DataType**: AvailIpd[]
+
+#### Fields
+
+##### `id`
+- **Description**:  The unique identifier used by a data repository for the data set or supporting information.
+- **Data Type**: Text
+- **Limit**: 30 characters
+
+##### `type`
+- **Description**:  The type of data set or supporting information being shared.
+- **Data Type**: Text
+- **Limit**: 30 characters
+
+##### `url`
+- **Description**:  The web address used to request or access the data set or supporting information.
+- **Data Type**: Text
+- **Limit**: 3999 characters
+
+##### `comment`
+- **Description**:  Additional information including the name of the data repository or other location where the data set or supporting information is available.
+- **Data Type**: Text
+- **Limit**: 30 characters
+
+
+
+
+### FlowGroup 
+- **Index Field:** `resultsSection.participantFlowModule.groups`
+- **Definition**: Arms or groups for describing the flow of participants through the clinical study. In general, it must include each arm to which participants were assigned.
+- **DataType**: FlowGroup[]
+
+#### Fields
+
+##### `id`
+- **Description**: Arm/Group ID generated by PRS
+- **Data Type**: Text
+
+##### `title`
+- **Description**: Descriptive label used to identify each arm or group.
+- **Data Type**: Text
+- **Limit**:  >=4 and <= 100 characters.
+
+##### `description`
+- **Description**: Brief description of each arm or group. In general, it must include sufficient details to understand each arm to which participants were assigned and the intervention strategy used in each arm.
+- **Data Type**: Text
+- **Limit**: 1500 characters.
+
+
+
+### FlowPeriod
+- **Index Field:** `resultsSection.participantFlowModule.periods`
+- **Definition**: Discrete stages of a clinical study during which numbers of participants at specific significant events or points of time are reported.
+- **DataType**: FlowPeriod[]
+
+#### Fields
+
+##### `title`
+- **Description**:  Title describing a stage of the study. If only one period is defined, the default title is Overall Study. 
+- **Data Type**: Text
+- **Limit**: 40 characters.
+
+
+### FlowPeriod milestones
+- **Index Field:** `resultsSection.participantFlowModule.periods.milestones`
+- **Description**: Arm/Group ID generated by PRS
+- **Data Type**: FlowMilestone[]
+
+#### FlowMilestone Fields
+- ##### `type`
+- **Description**:  Title describing a stage of the study. If only one period is defined, the default title is Overall Study. 
+- **Data Type**: Text
+- **Limit**: 40 characters.
+
+- ##### `comment`
+- **Description**:  Additional information about the milestone or data.
+- **Data Type**: Text
+- **Limit**: 500 characters.
+
+- ##### `achievements`
+- **Description**:  Milestone Data (per arm/group)
+- **Data Type**: FlowStats[]
+- **Limit**: 40 characters.
+
+##### FlowStats Fields
+
+- ##### `groupId`
+- **Description**:  Milestone Data (per arm/group)
+- **Data Type**: ID
+
+- ##### `groupId`
+- **Description**:  group id
+- **Data Type**: Type
+- **Limit**: 500 characters.
+
+- ##### `numSubjects`
+- **Description**:   number of subjects
+- **Data Type**: ID
+
+- ##### `numUnits`
+- **Description**:  number of units
+
+
+####  FlowDropWithdraw
+- **Index Field:** `resultsSection.participantFlowModule.periods.dropWithdraws`
+- **Definition**: Additional information about participants who did not complete the study or period. If reasons are provided, the total number of participants listed as Not Completed must be accounted for by all reasons for non-completion.
+- **DataType**:  DropWithdraw[]
+
+##### Fields
+
+###### `type`
+- **Description**:  Reason why participants did not complete the study or period.
+- **Data Type**: Text
+
+
+###### `comment`
+- **Description**:A brief description of the reason for non-completion, if "Other" Reason Not Completed Type is selected.
+- **Data Type**: Text
+- **Limit**: 500 characters.
+- * Other Reason [*] - A brief description of the reason for non-completion, if "Other" Reason Not Completed Type is selected
+- * **Limit**: 100 characters.
+
+
+######  FlowReason
+- **Index Field:** `resultsSection.participantFlowModule.periods.dropWithdraws.reasons`
+- **Definition**: Reason for Not Completed per arm/group
+- **DataType**:  FlowStats[]
+
+##### Fields
+
+###### `groupId`
+- **Description**:  Internally generated ID for reason not completed per arm/group
+
+###### `comment`
+- **Description**:  Reason why participants did not complete the study or period, for each Reason Not Completed.
+
+###### `numSubjects`
+- **Description**:  Number of participants in each arm or group that did not complete the study or period, for each Reason Not Completed.
+
+**FLOW PERIOD DUPLICATE HANDLING**
+
+### Issue
+- Some studies contain duplicate period entries with the same title  but different participant counts.
+
+- **Resolution**:Aggregate duplicate (study, period, event, group) combinations  by SUMMING num_subjects. 
+
+- This assumes multiple entries represent cumulative enrollment or separate cohorts within the same period.
+
+- **Limitation:** If entries represent corrections (not additions), totals may  be inflated.
+
+
+
+
 
 
 
@@ -384,35 +598,7 @@ Avoids snowflaking the schema while preserving all contact information for downs
         "outcome_type": "OTHER",
     },
 
-    "references": {
-        **Index Field:** "protocolSection.referencesModule.references",
-        **Object_type**: "array_of_dicts",
-        **Table_name**: "study_publications",
-        "extract_fields": ["pmid", **Object_type**, "citation"],
-    },
-
-    "retractions": {
-        **Index Field:** "protocolSection.referencesModule.retractions",
-        **Object_type**: "array_of_dicts",
-        **Table_name**: "study_retractions",
-        **Fields**: [
-            ("pmid", "pmid"),
-            ("status", "status")
-        ],
-        "transformer_method": "extract_outcomes",
-    },
-
-    "see_also": {
-        **Index Field:** "protocolSection.referencesModule.seeAlsoLinks",
-        **Object_type**: "array_of_dicts",
-        **Table_name**: "study_see_also",
-        **Fields**: [
-            ("label", "label"),
-            ("url", "url")
-        ],
-        "transformer_method": "extract_see_also"
-    },
-
+    
     "phases": {
         **Index Field:** "protocolSection.designModule.phases",
         **Object_type**: "simple_array",
@@ -423,15 +609,6 @@ Avoids snowflaking the schema while preserving all contact information for downs
     },
 
 
-    "std_ages": {
-        **Index Field:** "protocolSection.eligibilityModule.stdAges",
-        **Object_type**: "simple_array",
-        **Table_name**: "age_groups",
-        **Bridge_table_name**: "study_age_groups",
-        **Field_name**: "age_group",
-        "transformer_method": "extract_age_group"
-    },
-
     "ipd_info_types": {
         **Index Field:** "protocolSection.ipdSharingStatementModule.infoTypes",
         **Object_type**: "simple_array",
@@ -440,7 +617,7 @@ Avoids snowflaking the schema while preserving all contact information for downs
         **Field_name**: "info_type",
         "transformer_method": "extract_ipd_info_types"
     },
-#NOT EVERYTHING NEEDS A BRIDGE
+
     "secondary_id_infos": {
         **Index Field:** "protocolSection.identificationModule.secondaryIdInfos",
         **Object_type**: "array_of_dicts",
@@ -592,64 +769,8 @@ Avoids snowflaking the schema while preserving all contact information for downs
     },
 
 
-    # # PARTICIPANT FLOW GROUPS
-    # 'participant_flow_groups': {
-    #     'path': 'resultsSection.participantFlowModule.groups',
-    #     'type': 'array_of_dicts',
-    #     'table_name': 'flow_groups',
-    #     'bridge_table_name': 'study_flow_groups',
-    #     'extract_fields': ['id', 'title', 'description']
-    # },
-    #
-    # # PARTICIPANT FLOW PERIODS
-    # 'participant_flow_periods': {
-    #     'path': 'resultsSection.participantFlowModule.periods',
-    #     'type': 'array_of_dicts',
-    #     'table_name': 'flow_periods',
-    #     'bridge_table_name': 'study_flow_periods',
-    #     'extract_fields': ['title'],
-    #     'nested_arrays': {
-    #         'milestones': ['type', 'comment', 'achievements'],
-    #         'dropWithdraws': ['type', 'comment', 'reasons']
-    #     }
-    # },
-    #
-    # # BASELINE GROUPS
-    # 'baseline_groups': {
-    #     'path': 'resultsSection.baselineCharacteristicsModule.groups',
-    #     'type': 'array_of_dicts',
-    #     'table_name': 'baseline_groups',
-    #     'bridge_table_name': 'study_baseline_groups',
-    #     'extract_fields': ['id', 'title', 'description']
-    # },
-    #
-    # # BASELINE DENOMS
-    # 'baseline_denoms': {
-    #     'path': 'resultsSection.baselineCharacteristicsModule.denoms',
-    #     'type': 'array_of_dicts',
-    #     'table_name': 'baseline_denoms',
-    #     'extract_fields': ['units'],
-    #     'nested_arrays': {
-    #         'counts': ['groupId', 'value']
-    #     }
-    # },
-    #
-    # # BASELINE MEASURES
-    # 'baseline_measures': {
-    #     'path': 'resultsSection.baselineCharacteristicsModule.measures',
-    #     'type': 'array_of_dicts',
-    #     'table_name': 'baseline_measures',
-    #     'extract_fields': [
-    #         'title', 'description', 'populationDescription',
-    #         'paramType', 'dispersionType', 'unitOfMeasure',
-    #         'calculatePct', 'denomUnitsSelected'
-    #     ],
-    #     'nested_arrays': {
-    #         'denoms': ['units', 'counts'],
-    #         'classes': ['title', 'denoms', 'categories']
-    #     }
-    # },
-    #
+    
+ 
     # # OUTCOME MEASURES
     # 'outcome_measures_results': {
     #     'path': 'resultsSection.outcomeMeasuresModule.outcomeMeasures',
@@ -724,3 +845,17 @@ Avoids snowflaking the schema while preserving all contact information for downs
     # }
 
     }
+
+
+### design_who_masked
+**Index Field:** protocolSection.designModule.designInfo.maskingInfo.whoMasked
+
+**Definition**: The party or parties involved in the clinical trial who are prevented from having knowledge of the interventions assigned to individual participants
+
+**DataType**: [Enum(WhoMasked)]
+
+**Enum Values**:
+* PARTICIPANT - Participant
+* CARE_PROVIDER - Care Provider
+* INVESTIGATOR - Investigator
+* OUTCOMES_ASSESSOR - Outcomes Assessor

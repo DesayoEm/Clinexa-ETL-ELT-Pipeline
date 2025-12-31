@@ -6,7 +6,7 @@ import hashlib
 import json
 
 from transformer_config import SINGLE_FIELDS, NESTED_FIELDS
-from data_cleaning import Cleaner
+from data_quality import DataQualityHandler
 from airflow.utils.context import Context
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 
@@ -18,7 +18,7 @@ class Transformer:
         self.log = logging.getLogger("airflow.task")
 
         self.s3 = s3_dest_hook or S3Hook(aws_conn_id="aws_airflow")
-        self.cleaner = Cleaner()
+        self.dq_handler = DataQualityHandler()
 
     @staticmethod
     def generate_key(*args) -> str:
@@ -62,6 +62,13 @@ class Transformer:
         all_study_locations = []
         all_central_contacts = []
         all_study_central_contacts = []
+
+        all_study_references = []
+        all_study_links = []
+
+        all_ipds = []
+        all_flow_groups = []
+        all_flow_period_events = []
 
 
 
@@ -113,6 +120,21 @@ class Transformer:
             all_locations.extend(locations)
             all_study_locations.extend(study_locations)
 
+            references = self.extract_references(idx, study_key, study)
+            all_study_references.extend(references)
+
+            links = self.extract_links(idx, study_key, study)
+            all_study_links.extend(links)
+
+            ipds = self.extract_ipds(idx, study_key, study)
+            all_ipds.extend(ipds)
+
+            flow_groups = self.extract_flow_groups(idx,study_key, study)
+            all_flow_groups.extend(flow_groups)
+
+            flow_period_events = self.extract_flow_events(idx, study_key, study)
+            all_flow_period_events.extend(flow_period_events)
+
 
 
 
@@ -142,14 +164,43 @@ class Transformer:
         df_locations = pd.DataFrame(all_locations)
         df_study_locations = pd.DataFrame(all_study_locations)
 
+        #links and references
+        df_references = pd.DataFrame(all_study_references)
+        df_links = pd.DataFrame(all_study_links)
+
+        #IPD
+        df_ipds = pd.DataFrame(all_ipds)
+
+        #Milestones
+        df_flow_groups = pd.DataFrame(all_flow_groups)
+        df_flow_period_events = pd.DataFrame(all_flow_period_events)
+
         # dedupe
         df_sponsors = df_sponsors.drop_duplicates(subset=["sponsor_key"])
         df_conditions = df_conditions.drop_duplicates(subset=["condition_key"])
         df_keywords = df_keywords.drop_duplicates(subset=["keyword_key"])
         df_interventions = df_interventions.drop_duplicates(subset=["intervention_key"])
-        df_arm_group_interventions = df_arm_group_interventions.drop_duplicates(subset=["study_arm_key", "study_key" , "arm_intervention_name"])
+        df_arm_group_interventions = df_arm_group_interventions.drop_duplicates(subset=["study_arm_key", "study_key", "arm_intervention_name"])
         df_locations = df_locations.drop_duplicates(subset=["location_key"])
         df_central_contacts = df_central_contacts.drop_duplicates(subset=["contact_key"])
+
+        df_references = df_references.drop_duplicates(subset=["study_key", "ref_key"])
+        df_links = df_links.drop_duplicates(subset=["study_key", "link_key", "url"])
+        df_ipds = df_ipds.drop_duplicates(subset=["study_key", "ipd_key"])
+
+        df_flow_groups = df_flow_groups.drop_duplicates(subset=["study_key", "group_key"])
+
+
+        #Aggregate to mitigate data quality errors. check docs/data_quality_issues.md for details
+        df_flow_period_events = df_flow_period_events.groupby(
+            ['study_key', 'period_title', 'event_class', 'event_type', 'group_id'],
+            as_index=False
+        ).agg({
+            'num_subjects': 'sum',
+            'period_key': 'first'
+        })
+
+
 
         # load
         return df_studies, df_sponsors, df_study_sponsors
@@ -167,7 +218,7 @@ class Transformer:
         return study_record
 
 
-    def extract_sponsors(self, idx: Hashable, study_key: str, study_data: pd.Series):
+    def extract_sponsors(self, idx: Hashable, study_key: str, study_data: pd.Series) -> Tuple:
         """
         Extract sponsors from a single study.
         Args:
@@ -232,7 +283,7 @@ class Transformer:
         return sponsors, study_sponsors
 
 
-    def extract_conditions(self, idx: Hashable, study_key: str, study_data: pd.Series) -> Tuple | None:
+    def extract_conditions(self, idx: Hashable, study_key: str, study_data: pd.Series) -> Tuple:
         conditions = []
         study_conditions = []
 
@@ -284,7 +335,7 @@ class Transformer:
         return keywords, study_keywords
 
 
-    def extract_interventions(self, idx: Hashable, study_key: str, study_data: pd.Series) -> Tuple | None:
+    def extract_interventions(self, idx: Hashable, study_key: str, study_data: pd.Series) -> Tuple:
         intervention_names = []
         study_interventions = []
 
@@ -341,7 +392,7 @@ class Transformer:
         return intervention_names, study_interventions
 
 
-    def extract_arm_groups(self, idx: Hashable, study_key: str, study_data: pd.Series) -> List | None:
+    def extract_arm_groups(self, idx: Hashable, study_key: str, study_data: pd.Series) -> List:
         study_arms_interventions = []
 
         study_arms_index = NESTED_FIELDS["arm_groups"]["index_field"]
@@ -425,20 +476,16 @@ class Transformer:
 
     def extract_locations(self, idx: Hashable, study_key: str, study_data: pd.Series) -> Tuple:
         """
-        Extract locations and stores location contact as JSON blob.
-
-        NOTE: Officials are stored denormalized as JSON since not used for filtering/analysis.
-        Avoids snowflaking the schema while preserving all contact information for downstream applications.
+        Extract locations with status resolution
         """
         locations = []
         study_locations = []
 
+
         locations_index = NESTED_FIELDS["locations"]["index_field"]
         locations_list = study_data.get(locations_index)
 
-
         if isinstance(locations_list, (list, np.ndarray)) and len(locations_list) > 0:
-
             for location in locations_list:
                 facility = location.get("facility")
                 city = location.get("city")
@@ -446,75 +493,205 @@ class Transformer:
                 country = location.get("country")
 
                 location_key = self.generate_key(facility, city, state, country)
-
                 curr_location = {
                     "location_key": location_key,
-                    "status": location.get("status"),
                     "facility": facility,
                     "city": city,
                     "state": state,
-                    "country": country,
-                    "contacts": location.get("contacts"),  # json blob
-                }
+                    "country": state,
+                    "status": location.get("status")
 
+                }
                 geopoint = location.get("geoPoint")
-                if isinstance(geopoint, (dict, np.ndarray)) and len(geopoint) > 0:
-                    curr_location["lat"] = geopoint.get("lat"),
-                    curr_location["lon"] = geopoint.get("lon")
+                if isinstance(geopoint, dict) and geopoint:
+                    curr_location["lat"] = float(geopoint.get("lat")) if geopoint.get("lat") else None
+                    curr_location["lon"] = float(geopoint.get("lon")) if geopoint.get("lon") else None
 
                 locations.append(curr_location)
 
+                # resolve location status
 
-            study_locations.append(
-                    {
-                        "study_key": study_key,
-                        "location_key": location_key,
-                    }
-                )
+                overall_status = study_data.get("protocolSection.statusModule.overallStatus")
+
+                statuses = [loc.get("status") for loc in locations if loc.get("status")]
+                unique_statuses = set(statuses)
+
+
+                resolved_status, status_type = self.dq_handler.resolve_location_status(overall_status, unique_statuses)
+
+                study_locations.append({
+                    "study_key": study_key,
+                    "location_key": location_key,
+                    "status": resolved_status,
+                    "status_type": status_type, #aCTUAL or inferred
+                    "contacts": location.get("contacts"),
+
+                })
 
         return locations, study_locations
 
+    def extract_references(self, idx: Hashable, study_key: str, study_data: pd.Series) -> List:
+
+        study_references = []
+
+        references_index = NESTED_FIELDS["references"]["index_field"]
+        references_list = study_data.get(references_index)
+
+        if isinstance(references_list, (list, np.ndarray)) and len(references_list) > 0:
+
+            for reference in references_list:
+                pmid = reference.get('pmid')
+                reference_key = self.generate_key(study_key, pmid)
+                study_references.append({
+                    "study_key": study_key,
+                    "ref_key": reference_key,
+                    "pmid": pmid,
+                    "type": reference.get("type"),
+                    "citation": reference.get("citation")
+                })
+
+        return study_references
+
+    def extract_links(self, idx: Hashable, study_key: str, study_data: pd.Series) -> List:
+        study_links = []
+
+        links_index = NESTED_FIELDS["see_also"]["index_field"]
+        links_list = study_data.get(links_index)
+
+        if isinstance(links_list, (list, np.ndarray)) and len(links_list) > 0:
+
+            for link in links_list:
+                label = link.get('label')
+                study_links.append({
+                    "study_key": study_key,
+                    "link_key": link,
+                    "label": label,
+                    "url": link.get("url")
+                })
+
+        return study_links
+
+    def extract_ipds(self, idx: Hashable, study_key: str, study_data: pd.Series) -> List:
+        study_ipds = []
+
+        ipds_index = NESTED_FIELDS["avail_ipds"]["index_field"]
+        ipds_list = study_data.get(ipds_index)
+
+        if isinstance(ipds_list, (list, np.ndarray)) and len(ipds_list) > 0:
+
+            for ipd in ipds_list:
+                ipd_id = ipd.get('id')
+                ipd_type = ipd.get('type')
+                ipd_url = ipd.get('url')
+
+                ipd_key = self.generate_key(study_key, ipd_id, ipd_type, ipd_url)
+                study_ipds.append({
+                    "study_key": study_key,
+                    "ipd_key": ipd_key,
+                    "id": ipd_id,
+                    "type": ipd_type,
+                    "url": ipd_url,
+                    "comment": ipd.get("comment")
+                })
+        return study_ipds
+
+
+    def extract_flow_groups(self, idx: Hashable, study_key: str, study_data: pd.Series) -> List:
+        study_flow_groups = []
+
+        flow_index = NESTED_FIELDS["flow_groups"]["index_field"]
+        flow_group_list = study_data.get(flow_index)
+
+        if isinstance(flow_group_list, (list, np.ndarray)) and len(flow_group_list) > 0:
+            for flow in flow_group_list:
+                group_id = flow.get('id')
+                group_key = self.generate_key(study_key, group_id)
+
+                study_flow_groups.append({
+                    "study_key": study_key,
+                    "group_key": group_key,
+                    "id": group_id,
+                    "title": flow.get("title"),
+                    "description": flow.get("description")
+
+                })
+
+        return study_flow_groups
+
+    def extract_flow_events(self, idx: Hashable, study_key: str, study_data: pd.Series) -> List:
+        flow_period_events = []
+
+        flow_index = NESTED_FIELDS["flow_periods"]["index_field"]
+        flow_period_list = study_data.get(flow_index)
+
+        if isinstance(flow_period_list, (list, np.ndarray)) and len(flow_period_list) > 0:
+            for period in flow_period_list:
+                period_title = period.get('title')
+                period_key = self.generate_key(study_key, period_title)
+
+                period_milestones = period.get('milestones')
+                if isinstance(period_milestones, (list, np.ndarray)) and len(period_milestones) > 0:
+                    for period_milestone in period_milestones:
+                        milestone_type = period_milestone.get('type')
+                        milestone_achievements = period_milestone.get('achievements')
+
+                        if isinstance(milestone_achievements, (list, np.ndarray)) and len(milestone_achievements) > 0:
+                            for achievement in milestone_achievements:
+                                flow_period_events.append({
+                                    "study_key": study_key,
+                                    "period_key": period_key,
+                                    "event_class": "ACHIEVEMENT",
+                                    "event_type": milestone_type,
+                                    "period_title": period_title,
+                                    "group_id": achievement.get('groupId'),
+                                    "num_subjects": achievement.get('numSubjects'),
+
+                                })
+                        else:
+                            flow_period_events.append({
+                                "study_key": study_key,
+                                "event_class": "ACHIEVEMENT",
+                                "event_type": milestone_type,
+                                "period_key": period_key,
+                                "period_title": period_title,
+
+                                "group_id":"UNKNOWN",
+                                "num_subjects": None, #not 0
+
+                            })
+
+                period_withdrawals = period.get('dropWithdraws')
+                if isinstance(period_withdrawals, (list, np.ndarray)) and len(period_withdrawals) > 0:
+                    for withdrawal in period_withdrawals:
+                        withdrawal_type = withdrawal.get('type')
+                        withdrawal_reasons = withdrawal.get('reasons')
+
+                        if isinstance(withdrawal_reasons, (list, np.ndarray)) and len(withdrawal_reasons) > 0:
+                            for reason in withdrawal_reasons:
+                                flow_period_events.append({
+                                    "study_key": study_key,
+                                    "period_key": period_key,
+                                    "event_class": "WITHDRAWAL",
+                                    "event_type": withdrawal_type,
+                                    "period_title": period_title,
+                                    "group_id": reason.get('groupId'),
+                                    "num_subjects": reason.get('numSubjects'),
+
+                                })
+                        else:
+                            flow_period_events.append({
+                                "study_key": study_key,
+                                "event_class": "WITHDRAWAL",
+                                "event_type": withdrawal_type,
+                                "period_key": period_key,
+                                "period_title": period_title,
+                                "group_id":"UNKNOWN",
+                                "num_subjects": None, #not 0
+
+                            })
 
 
 
-    def extract_outcomes(self, study_key: str, study_data: pd.Series) -> Tuple:
-        pass
+        return flow_period_events
 
-    def extract_see_also(self, idx: Hashable, study_key: str, study_data: pd.Series) -> Tuple:
-        pass
 
-    def extract_study_phases(self, study_key: str, study_data: pd.Series) -> Tuple:
-        pass
-
-    def extract_age_group(self, study_key: str, study_data: pd.Series) -> Tuple:
-        pass
-
-    def extract_ipd_info_types(self, study_key: str, study_data: pd.Series) -> Tuple:
-        pass
-
-    def extract_id_infos(self, idx: Hashable, study_key: str, study_data: pd.Series) -> Tuple:
-        pass
-
-    def extract_nct_id_aliases(self, study_key: str, study_data: pd.Series) -> Tuple:
-        pass
-
-    def extract_condition_mesh(self, study_key: str, study_data: pd.Series) -> Tuple:
-        pass
-
-    def extract_intervention_mesh(self, study_key: str, study_data: pd.Series) -> Tuple:
-        pass
-
-    def extract_large_documents(self, idx: Hashable, study_key: str, study_data: pd.Series) -> Tuple:
-        pass
-
-    def extract_unposted_events(self, idx: Hashable, study_key: str, study_data: pd.Series) -> Tuple:
-        pass
-
-    def extract_violation_events(self, idx: Hashable, study_key: str, study_data: pd.Series) -> Tuple:
-        pass
-
-    def extract_removed_countries(self, idx: Hashable, study_key: str, study_data: pd.Series) -> Tuple:
-        pass
-
-    def extract_submission_infos(self, idx: Hashable, study_key: str, study_data: pd.Series) -> Tuple:
-        pass
