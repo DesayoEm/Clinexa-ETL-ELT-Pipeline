@@ -68,7 +68,7 @@ class Transformer:
 
         all_ipds = []
         all_flow_groups = []
-        all_flow_period_achievements = []
+        all_flow_period_events = []
 
 
 
@@ -132,8 +132,8 @@ class Transformer:
             flow_groups = self.extract_flow_groups(idx,study_key, study)
             all_flow_groups.extend(flow_groups)
 
-            flow_period_achievements = self.extract_milestone_achievements(idx, study_key, study)
-            all_flow_period_achievements.extend(flow_period_achievements)
+            flow_period_events = self.extract_flow_events(idx, study_key, study)
+            all_flow_period_events.extend(flow_period_events)
 
 
 
@@ -173,7 +173,7 @@ class Transformer:
 
         #Milestones
         df_flow_groups = pd.DataFrame(all_flow_groups)
-        df_flow_period_achievements = pd.DataFrame(all_flow_period_achievements)
+        df_flow_period_events = pd.DataFrame(all_flow_period_events)
 
         # dedupe
         df_sponsors = df_sponsors.drop_duplicates(subset=["sponsor_key"])
@@ -189,7 +189,16 @@ class Transformer:
         df_ipds = df_ipds.drop_duplicates(subset=["study_key", "ipd_key"])
 
         df_flow_groups = df_flow_groups.drop_duplicates(subset=["study_key", "group_key"])
-        df_flow_period_achievements = df_flow_period_achievements.drop_duplicates(subset=["study_key", "period_key", "group_id"])
+
+
+        #Aggregate to mitigate data quality errors. check docs/data_quality_issues.md for details
+        df_flow_period_events = df_flow_period_events.groupby(
+            ['study_key', 'period_title', 'event_class', 'event_type', 'group_id'],
+            as_index=False
+        ).agg({
+            'num_subjects': 'sum',
+            'period_key': 'first'
+        })
 
 
 
@@ -490,6 +499,7 @@ class Transformer:
                     "city": city,
                     "state": state,
                     "country": state,
+                    "status": location.get("status")
 
                 }
                 geopoint = location.get("geoPoint")
@@ -500,16 +510,20 @@ class Transformer:
                 locations.append(curr_location)
 
                 # resolve location status
+
+                overall_status = study_data.get("protocolSection.statusModule.overallStatus")
+
                 statuses = [loc.get("status") for loc in locations if loc.get("status")]
                 unique_statuses = set(statuses)
 
-                resolved_status = self.dq_handler.resolve_location_status(unique_statuses)
+
+                resolved_status, status_type = self.dq_handler.resolve_location_status(overall_status, unique_statuses)
 
                 study_locations.append({
                     "study_key": study_key,
                     "location_key": location_key,
                     "status": resolved_status,
-                    "status_type": "", #aCTUAL or inferred
+                    "status_type": status_type, #aCTUAL or inferred
                     "contacts": location.get("contacts"),
 
                 })
@@ -604,8 +618,8 @@ class Transformer:
 
         return study_flow_groups
 
-    def extract_milestone_achievements(self, idx: Hashable, study_key: str, study_data: pd.Series) -> List:
-        study_flow_milestone_achievements = []
+    def extract_flow_events(self, idx: Hashable, study_key: str, study_data: pd.Series) -> List:
+        flow_period_events = []
 
         flow_index = NESTED_FIELDS["flow_periods"]["index_field"]
         flow_period_list = study_data.get(flow_index)
@@ -622,28 +636,62 @@ class Transformer:
                         milestone_achievements = period_milestone.get('achievements')
 
                         if isinstance(milestone_achievements, (list, np.ndarray)) and len(milestone_achievements) > 0:
-                            for milestone_achievement in milestone_achievements:
-                                study_flow_milestone_achievements.append({
+                            for achievement in milestone_achievements:
+                                flow_period_events.append({
                                     "study_key": study_key,
                                     "period_key": period_key,
+                                    "event_class": "ACHIEVEMENT",
+                                    "event_type": milestone_type,
                                     "period_title": period_title,
-                                    "milestone_type": milestone_type,
-                                    "group_id": milestone_achievement.get('groupId'),
-                                    "num_subjects": milestone_achievement.get('numSubjects'),
+                                    "group_id": achievement.get('groupId'),
+                                    "num_subjects": achievement.get('numSubjects'),
 
                                 })
                         else:
-                            study_flow_milestone_achievements.append({
+                            flow_period_events.append({
                                 "study_key": study_key,
+                                "event_class": "ACHIEVEMENT",
+                                "event_type": milestone_type,
                                 "period_key": period_key,
                                 "period_title": period_title,
-                                "milestone_type": milestone_type,
+
+                                "group_id":"UNKNOWN",
+                                "num_subjects": None, #not 0
+
+                            })
+
+                period_withdrawals = period.get('dropWithdraws')
+                if isinstance(period_withdrawals, (list, np.ndarray)) and len(period_withdrawals) > 0:
+                    for withdrawal in period_withdrawals:
+                        withdrawal_type = withdrawal.get('type')
+                        withdrawal_reasons = withdrawal.get('reasons')
+
+                        if isinstance(withdrawal_reasons, (list, np.ndarray)) and len(withdrawal_reasons) > 0:
+                            for reason in withdrawal_reasons:
+                                flow_period_events.append({
+                                    "study_key": study_key,
+                                    "period_key": period_key,
+                                    "event_class": "WITHDRAWAL",
+                                    "event_type": withdrawal_type,
+                                    "period_title": period_title,
+                                    "group_id": reason.get('groupId'),
+                                    "num_subjects": reason.get('numSubjects'),
+
+                                })
+                        else:
+                            flow_period_events.append({
+                                "study_key": study_key,
+                                "event_class": "WITHDRAWAL",
+                                "event_type": withdrawal_type,
+                                "period_key": period_key,
+                                "period_title": period_title,
                                 "group_id":"UNKNOWN",
                                 "num_subjects": None, #not 0
 
                             })
 
 
-        return study_flow_milestone_achievements
+
+        return flow_period_events
 
 

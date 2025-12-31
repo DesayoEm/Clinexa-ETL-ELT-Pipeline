@@ -542,6 +542,17 @@ Avoids snowflaking the schema while preserving all contact information for downs
 ###### `numSubjects`
 - **Description**:  Number of participants in each arm or group that did not complete the study or period, for each Reason Not Completed.
 
+**FLOW PERIOD DUPLICATE HANDLING**
+
+### Issue
+- Some studies contain duplicate period entries with the same title  but different participant counts.
+
+- **Resolution**:Aggregate duplicate (study, period, event, group) combinations  by SUMMING num_subjects. 
+
+- This assumes multiple entries represent cumulative enrollment or separate cohorts within the same period.
+
+- **Limitation:** If entries represent corrections (not additions), totals may  be inflated.
+
 
 
 

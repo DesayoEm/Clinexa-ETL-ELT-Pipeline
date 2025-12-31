@@ -248,7 +248,7 @@ NESTED_FIELDS = {
             'milestones': ['type', 'comment', 'achievements'],
             'dropWithdraws': ['type', 'comment', 'reasons']
         },
-        "transformer_method": "extract_milestone_achievements",
+        "transformer_method": "extract_flow_events",
     },
 
 
