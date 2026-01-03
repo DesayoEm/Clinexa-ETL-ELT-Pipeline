@@ -91,6 +91,7 @@ SINGLE_FIELDS = {
 }
 
 NESTED_FIELDS = {
+    #sponsorCollaboratorsModule
     "sponsor": { #NOT NESTED BUT TREATED AS A SEPARATE DIM
         "index_field": "protocolSection.sponsorCollaboratorsModule.leadSponsor",
         "object_type": "simple dict",
@@ -100,7 +101,7 @@ NESTED_FIELDS = {
         ],
         "table_name": "sponsors",
         "bridge_table_name": "study_sponsors",
-        "transformer_method": "extract_sponsors",
+        "transformer_method": "transform_sponsors",
     },
     "collaborators": {
         "index_field": "protocolSection.sponsorCollaboratorsModule.collaborators",
@@ -111,15 +112,16 @@ NESTED_FIELDS = {
         ],
         "table_name": "sponsor",
         "bridge_table_name": "study_sponsors",
-        "transformer_method": "extract_sponsors",
+        "transformer_method": "transform_sponsors",
     },
+    #conditionsModule
     "conditions": {
         "index_field": "protocolSection.conditionsModule.conditions",
         "object_type": "simple_array",
         "table_name": "conditions",
         "bridge_table_name": "bridge_study_conditions",
         "field_name": "condition_name",
-        "transformer_method": "extract_conditions",
+        "transformer_method": "transform_conditions",
     },
     "keywords": {
         "index_field": "protocolSection.conditionsModule.keywords",
@@ -127,8 +129,9 @@ NESTED_FIELDS = {
         "table_name": "keywords",
         "bridge_table_name": "bridge_study_keywords",
         "field_name": "keyword",
-        "transformer_method": "extract_keywords",
+        "transformer_method": "transform_keywords",
     },
+    #armsInterventionsModule
     "interventions": {
         "index_field": "protocolSection.armsInterventionsModule.interventions",
         "object_type": "array_of_dicts",
@@ -139,7 +142,7 @@ NESTED_FIELDS = {
         ],
         "table_name": "interventions",
         "bridge_table_name": "bridge_study_interventions",
-        "transformer_method": "extract_interventions",
+        "transformer_method": "transform_interventions",
     },
     "arm_groups": {
         "index_field": "protocolSection.armsInterventionsModule.armGroups",
@@ -150,9 +153,9 @@ NESTED_FIELDS = {
             ("arm_group_type", "type"),
             ("arm_group_desc", "description"),
         ],
-        "transformer_method": "extract_arm_groups",
+        "transformer_method": "transform_arm_groups",
     },
-
+    # contactsLocationsModule
     "central_contacts": {
         "index_field": "protocolSection.contactsLocationsModule.centralContacts",
         "object_type": "array_of_dicts",
@@ -165,7 +168,7 @@ NESTED_FIELDS = {
             ("phone", "phone"),
             ("phoneExt", "phoneExt"),
         ],
-        "transformer_method": "extract_central_contacts",
+        "transformer_method": "transform_central_contacts",
     },
     "locations": {
         "index_field": "protocolSection.contactsLocationsModule.locations",
@@ -197,19 +200,18 @@ NESTED_FIELDS = {
                     ("phone", "phone"),
                     ("phoneExt", "phoneExt"),
                 ],
-                "transformer_method": "extract_contacts",
+                "transformer_method": "transform_contacts",
             },
         },
-        "transformer_method": "extract_locations",
+        "transformer_method": "transform_locations",
     },
-    #REFERENCES MODULE
-
+    #referencesModule
     "references": {
         "index_field": "protocolSection.referencesModule.references",
         "object_type": "array_of_dicts",
         "table_name": "study_publications",
         "fields": ["pmid", "type"],
-        "transformer_method": "extract_references",
+        "transformer_method": "transform_references",
     },
 
     "see_also": {
@@ -217,7 +219,7 @@ NESTED_FIELDS = {
         "object_type": "array_of_dicts",
         "table_name": "study_see_also",
         "fields": ["label",  "url"],
-        "transformer_method": "extract_links",
+        "transformer_method": "transform_links",
     },
 
     "avail_ipds": {
@@ -225,31 +227,49 @@ NESTED_FIELDS = {
         "object_type": "array_of_dicts",
         "table_name": "study_ipds",
         "fields": ["id", "type", "url", "comment"],
-        "transformer_method": "extract_ipds",
+        "transformer_method": "transform_ipds",
     },
 
-    # PARTICIPANT FLOW GROUPS
+    # participantFlowModule
     'flow_groups': {
         'index_field': 'resultsSection.participantFlowModule.groups',
         'type': 'array_of_dicts',
         'bridge_table_name': 'study_flow_groups',
         'fields': ['id', 'title', 'description'],
-        "transformer_method": "extract_flow_groups",
+        "transformer_method": "transform_flow_groups",
     },
 
-    # PARTICIPANT FLOW PERIODS
+
     'flow_periods': {
         'index_field': 'resultsSection.participantFlowModule.periods',
         'type': 'array_of_dicts',
-        'table_name': 'flow_periods',
         'bridge_table_name': 'study_flow_periods',
-        'extract_fields': ['title'],
+        'transform_fields': ['title'],
         'nested': {
             'milestones': ['type', 'comment', 'achievements'],
             'dropWithdraws': ['type', 'comment', 'reasons']
         },
-        "transformer_method": "extract_flow_events",
+        "transformer_method": "transform_flow_events",
     },
+
+    # outcomeMeasuresModule
+    'outcome_measures': {
+        'index_field': 'resultsSection.outcomeMeasuresModule.outcomeMeasures',
+        'type': 'array_of_dicts',
+        'transform_fields': [
+            'type', 'title', 'description', 'populationDescription', 'reportingStatus','anticipatedPostingDate',
+            'paramType', 'dispersionType', 'unitOfMeasure', 'calculatePct', 'timeFrame', 'denomUnitsSelected'
+            'typeUnitsAnalyzed'],
+        'nested': {
+            'OutcomeGroup': ['id', 'title', 'description'],
+            'OutcomeDenom': ['units', 'counts' , (['groupId', 'value'])],
+            'OutcomeClass': ['categories', 'comment', 'achievements'],
+
+            'OutcomeAnalysis ': ['type', 'comment', 'reasons']
+        },
+        "transformer_method": "transform_flow_events",
+    },
+
 
 
 
@@ -263,7 +283,7 @@ NESTED_FIELDS = {
             ("description", "description"),
             ("timeFrame", "timeFrame"),
         ],
-        "transformer_method": "extract_outcomes",
+        "transformer_method": "transform_outcomes",
         "outcome_type": "PRIMARY",
     },
     "secondary_outcomes": {
@@ -275,7 +295,7 @@ NESTED_FIELDS = {
             ("description", "description"),
             ("timeFrame", "timeFrame"),
         ],
-        "transformer_method": "extract_outcomes",
+        "transformer_method": "transform_outcomes",
         "outcome_type": "SECONDARY",
     },
     "other_outcomes": {
@@ -287,7 +307,7 @@ NESTED_FIELDS = {
             ("description", "description"),
             ("timeFrame", "timeFrame"),
         ],
-        "transformer_method": "extract_outcomes",
+        "transformer_method": "transform_outcomes",
         "outcome_type": "OTHER",
     },
 
@@ -297,7 +317,7 @@ NESTED_FIELDS = {
         "table_name": "phases",
         "bridge_table_name": "study_phases",
         "field_name": "phase",
-        "transformer_method": "extract_study_phases",
+        "transformer_method": "transform_study_phases",
     },
 
     "ipd_info_types": {
@@ -306,7 +326,7 @@ NESTED_FIELDS = {
         "table_name": "ipd_info_types",
         "bridge_table_name": "study_ipd_info_types",
         "field_name": "info_type",
-        "transformer_method": "extract_ipd_info_types",
+        "transformer_method": "transform_ipd_info_types",
     },
     "secondary_id_infos": {
         "index_field": "protocolSection.identificationModule.secondaryIdInfos",
@@ -319,7 +339,7 @@ NESTED_FIELDS = {
             ("domain", "domain"),
             ("link", "link"),
         ],
-        "transformer_method": "extract_id_infos",
+        "transformer_method": "transform_id_infos",
     },
     "nct_id_aliases": {
         "index_field": "protocolSection.identificationModule.nctIdAliases",
@@ -327,7 +347,7 @@ NESTED_FIELDS = {
         "table_name": "nct_aliases",
         "bridge_table_name": "study_nct_aliases",
         "field_name": "alias_nct_id",
-        "transformer_method": "extract_nct_id_aliases",
+        "transformer_method": "transform_nct_id_aliases",
     },
     # ===== DERIVED SECTION (MeSH) =====
     # CONDITION MESH TERMS
@@ -338,7 +358,7 @@ NESTED_FIELDS = {
         "table_name": "condition_mesh_terms",
         "bridge_table_name": "study_conditions_mesh",
         "is_primary": True,
-        "transformer_method": "extract_condition_mesh",
+        "transformer_method": "transform_condition_mesh",
     },
     "condition_mesh_ancestors": {
         "index_field": "derivedSection.conditionBrowseModule.ancestors",
@@ -347,7 +367,7 @@ NESTED_FIELDS = {
         "table_name": "condition_mesh_terms",
         "bridge_table_name": "study_conditions_mesh",
         "is_primary": False,
-        "transformer_method": "extract_condition_mesh",
+        "transformer_method": "transform_condition_mesh",
     },
     "intervention_mesh_terms": {
         "index_field": "derivedSection.interventionBrowseModule.meshes",
@@ -356,7 +376,7 @@ NESTED_FIELDS = {
         "table_name": "intervention_mesh_terms",
         "bridge_table_name": "study_interventions_mesh",
         "is_primary": True,
-        "transformer_method": "extract_intervention_mesh",
+        "transformer_method": "transform_intervention_mesh",
     },
     "intervention_mesh_ancestors": {
         "index_field": "derivedSection.interventionBrowseModule.ancestors",
@@ -365,7 +385,7 @@ NESTED_FIELDS = {
         "table_name": "intervention_mesh_terms",
         "bridge_table_name": "study_interventions_mesh",
         "is_primary": False,
-        "transformer_method": "extract_intervention_mesh",
+        "transformer_method": "transform_intervention_mesh",
     },
     "large_documents": {
         "index_field": "documentSection.largeDocumentModule.largeDocs",
@@ -382,7 +402,7 @@ NESTED_FIELDS = {
             ("size", "size"),
         ],
         "table_name": "study_documents",
-        "transformer_method": "extract_large_documents",
+        "transformer_method": "transform_large_documents",
     },
     "unposted_events": {
         "index_field": "annotationSection.annotationModule.unpostedAnnotation.unpostedEvents",
@@ -394,7 +414,7 @@ NESTED_FIELDS = {
         ],
         "table_name": "unposted_events",
         "bridge_table_name": "study_unposted_events",
-        "transformer_method": "extract_unposted_events",
+        "transformer_method": "transform_unposted_events",
     },
     "violation_events": {
         "index_field": "annotationSection.annotationModule.violationAnnotation.violationEvents",
@@ -409,7 +429,7 @@ NESTED_FIELDS = {
         ],
         "table_name": "violation_events",
         "bridge_table_name": "study_violation_events",
-        "transformer_method": "extract_violation_events",
+        "transformer_method": "transform_violation_events",
     },
     "removed_countries": {
         "index_field": "derivedSection.miscInfoModule.removedCountries",
@@ -417,7 +437,7 @@ NESTED_FIELDS = {
         "table_name": "countries",
         "bridge_table_name": "study_removed_countries",
         "field_name": "country",
-        "transformer_method": "extract_removed_countries",
+        "transformer_method": "transform_removed_countries",
     },
     "sub_infos": {
         "index_field": "derivedSection.miscInfoModule.submissionTracking.submissionInfos",
@@ -431,7 +451,7 @@ NESTED_FIELDS = {
         ],
         "table_name": "sub_tracking",
         "bridge_table_name": "study_sub_tracking",
-        "transformer_method": "extract_sub_infos",
+        "transformer_method": "transform_sub_infos",
     },
 
 }

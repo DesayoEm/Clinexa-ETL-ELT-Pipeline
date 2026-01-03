@@ -25,12 +25,12 @@
 #### Fields
 
 ##### `name`
-- **Description**: Name of the sponsoring entity or individual
+- **Definition**: Name of the sponsoring entity or individual
 - **Data Type**: Text
 - **Limit**: 160 characters
 
 ##### `class`
-- **Description**: Category of the sponsoring organization
+- **Definition**: Category of the sponsoring organization
 - **Data Type**: Enum(AgencyClass)
 - **Enum Values**:
   - `NIH` — National Institutes of Health
@@ -101,13 +101,13 @@
 #### Fields
 
 ##### `label`
-- **Description**: Short name used to identify the arm
+- **Definition**: Short name used to identify the arm
 - **Data Type**: Text
 - **Limit**: 100 characters
 - **Required**: Yes
 
 ##### `type`
-- **Description**: The role of the arm in the clinical trial
+- **Definition**: The role of the arm in the clinical trial
 - **Data Type**: Enum(ArmGroupType)
 - **Required**: Yes
 - **Enum Values**:
@@ -119,14 +119,14 @@
   - `OTHER` — Other
 
 ##### `description`
-- **Description**: Additional descriptive information to differentiate this arm from others (including which interventions are administered)
+- **Definition**: Additional descriptive information to differentiate this arm from others (including which interventions are administered)
 - **Data Type**: Markup
 - **Limit**: 999 characters
 - **Required**: Conditional
 
 #### Nested Fields
 ######  `interventionNames`
-- **Description**: Names of interventions associated with this arm. References `interventions[].name` within the same study.
+- **Definition**: Names of interventions associated with this arm. References `interventions[].name` within the same study.
 - **Data Type**: Array of Text
 - **Limit**: 200 characters per name
 - **Required**: Yes (for interventional studies)
@@ -154,13 +154,13 @@
 #### Fields
 
 ##### `name`
-- **Description**: Brief descriptive name for the intervention. Non-proprietary name required if available.
+- **Definition**: Brief descriptive name for the intervention. Non-proprietary name required if available.
 - **Data Type**: Text
 - **Limit**: 200 characters
 - **Required**: Yes
 
 ##### `type`
-- **Description**: General type of intervention
+- **Definition**: General type of intervention
 - **Data Type**: Enum(InterventionType)
 - **Required**: Yes
 - **Enum Values**:
@@ -177,18 +177,18 @@
   - `OTHER` — Other
 
 ##### `description`
-- **Description**: Details sufficient to distinguish this intervention from similar ones (e.g., dosage form, dosage, frequency, duration for drugs)
+- **Definition**: Details sufficient to distinguish this intervention from similar ones (e.g., dosage form, dosage, frequency, duration for drugs)
 - **Data Type**: Markup
 - **Limit**: 1,000 characters
 - **Required**: Yes
 
 ##### `armGroupLabels`
-- **Description**: Labels of arm groups that receive this intervention. References `armGroups[].label` within the same study.
+- **Definition**: Labels of arm groups that receive this intervention. References `armGroups[].label` within the same study.
 - **Data Type**: Array of Text
 - **Required**: Yes (if multiple arms exist)
 
 ##### `otherNames`
-- **Description**: Other current/former names or aliases (brand names, serial numbers)
+- **Definition**: Other current/former names or aliases (brand names, serial numbers)
 - **Data Type**: Array of Text
 - **Limit**: 200 characters per name
 - **Required**: No
@@ -244,13 +244,13 @@
 **Description**: Participating facility in a clinical study
 
 ##### `facility`
-- **Description**: ull name of the organization where the clinical study is being conducted
+- **Definition**: ull name of the organization where the clinical study is being conducted
 - **Data Type**: Text
 - **Limit**: 254 characters
 
 
 ##### `status`
-- **Description**: Individual Site Status 
+- **Definition**: Individual Site Status 
 - **Data Type**: Enum(RecruitmentStatus)
 - **Enum Values**:
   - `ACTIVE_NOT_RECRUITING` - Active, not recruiting
@@ -277,19 +277,19 @@ This ensures patient matching prioritizes study-level recruitment status while f
 """
 
 ##### `city`
-- **Description**: City
+- **Definition**: City
 - **Data Type**: GeoName
 
 ##### `state`
-- **Description**: State/Province. Required for U.S. locations (including territories of the United States)
+- **Definition**: State/Province. Required for U.S. locations (including territories of the United States)
 - **Data Type**: GeoName
 
 ##### `zip`
-- **Description**: ZIP/Postal Code. Required for U.S. locations (including territories of the United States)
+- **Definition**: ZIP/Postal Code. Required for U.S. locations (including territories of the United States)
 - **Data Type**: GeoName
 
 ##### `geoPoint`
-- **Description**: Lat and Lon
+- **Definition**: Lat and Lon
 - **Data Type**: Dict
 
 #### Nested Fields
@@ -318,27 +318,27 @@ Avoids snowflaking the schema while preserving all contact information for downs
 #### Fields
 
 ##### `name`
-- **Description**: Name or title of contact person
+- **Definition**: Name or title of contact person
 - **Data Type**: Text
 - **Required**: Yes
 
 ##### `role`
-- **Description**: Role of the contact
+- **Definition**: Role of the contact
 - **Data Type**: Enum(CentralContactRole)
 - **Values**: `CONTACT`, `PRINCIPAL_INVESTIGATOR`, etc.
 
 ##### `phone`
-- **Description**: Telephone number (preferably toll-free)
+- **Definition**: Telephone number (preferably toll-free)
 - **Data Type**: Text
 - **Required**: Yes
 
 ##### `phoneExt`
-- **Description**: Phone extension
+- **Definition**: Phone extension
 - **Data Type**: Text
 - **Required**: No
 
 ##### `email`
-- **Description**: Email address
+- **Definition**: Email address
 - **Data Type**: Text
 - **Required**: Yes
 
@@ -363,12 +363,12 @@ Avoids snowflaking the schema while preserving all contact information for downs
 #### Fields
 
 ##### `pmid`
-- **Description**: PubMed identifier for the citation in MEDLINE
+- **Definition**: PubMed identifier for the citation in MEDLINE
 - **Data Type**: Text
 - **Required**: Yes
 
 ##### `type`
-- **Description**: Reference type
+- **Definition**: Reference type
 - **Data Type**: Enum(ReferenceType)
 **Enum Values**:
 - PARTICIPANT - Participant
@@ -377,7 +377,7 @@ Avoids snowflaking the schema while preserving all contact information for downs
 - DERIVED - derived
 
 ##### `citations`
-- **Description**: PubMed identifier for the citation in MEDLINE
+- **Definition**: PubMed identifier for the citation in MEDLINE
 - **Data Type**: Text
 - **Required**: Yes
 
@@ -389,12 +389,12 @@ Avoids snowflaking the schema while preserving all contact information for downs
 #### Fields
 
 ##### `label`
-- **Description**: Title or brief description of the linked page.
+- **Definition**: Title or brief description of the linked page.
 - **Data Type**: Text
 - **Limit**: 254 characters.
 
 ##### `url`
-- **Description**: Complete URL, including http:// or https:
+- **Definition**: Complete URL, including http:// or https:
 - **Data Type**: Text
 - **Limit**: 3,999 characters.
 
@@ -408,22 +408,22 @@ Avoids snowflaking the schema while preserving all contact information for downs
 #### Fields
 
 ##### `id`
-- **Description**:  The unique identifier used by a data repository for the data set or supporting information.
+- **Definition**:  The unique identifier used by a data repository for the data set or supporting information.
 - **Data Type**: Text
 - **Limit**: 30 characters
 
 ##### `type`
-- **Description**:  The type of data set or supporting information being shared.
+- **Definition**:  The type of data set or supporting information being shared.
 - **Data Type**: Text
 - **Limit**: 30 characters
 
 ##### `url`
-- **Description**:  The web address used to request or access the data set or supporting information.
+- **Definition**:  The web address used to request or access the data set or supporting information.
 - **Data Type**: Text
 - **Limit**: 3999 characters
 
 ##### `comment`
-- **Description**:  Additional information including the name of the data repository or other location where the data set or supporting information is available.
+- **Definition**:  Additional information including the name of the data repository or other location where the data set or supporting information is available.
 - **Data Type**: Text
 - **Limit**: 30 characters
 
@@ -438,16 +438,16 @@ Avoids snowflaking the schema while preserving all contact information for downs
 #### Fields
 
 ##### `id`
-- **Description**: Arm/Group ID generated by PRS
+- **Definition**: Arm/Group ID generated by PRS
 - **Data Type**: Text
 
 ##### `title`
-- **Description**: Descriptive label used to identify each arm or group.
+- **Definition**: Descriptive label used to identify each arm or group.
 - **Data Type**: Text
 - **Limit**:  >=4 and <= 100 characters.
 
 ##### `description`
-- **Description**: Brief description of each arm or group. In general, it must include sufficient details to understand each arm to which participants were assigned and the intervention strategy used in each arm.
+- **Definition**: Brief description of each arm or group. In general, it must include sufficient details to understand each arm to which participants were assigned and the intervention strategy used in each arm.
 - **Data Type**: Text
 - **Limit**: 1500 characters.
 
@@ -461,7 +461,7 @@ Avoids snowflaking the schema while preserving all contact information for downs
 #### Fields
 
 ##### `title`
-- **Description**:  Title describing a stage of the study. If only one period is defined, the default title is Overall Study. 
+- **Definition**:  Title describing a stage of the study. If only one period is defined, the default title is Overall Study. 
 - **Data Type**: Text
 - **Limit**: 40 characters.
 
@@ -473,37 +473,37 @@ Avoids snowflaking the schema while preserving all contact information for downs
 
 #### FlowMilestone Fields
 - ##### `type`
-- **Description**:  Title describing a stage of the study. If only one period is defined, the default title is Overall Study. 
+- **Definition**:  Title describing a stage of the study. If only one period is defined, the default title is Overall Study. 
 - **Data Type**: Text
 - **Limit**: 40 characters.
 
 - ##### `comment`
-- **Description**:  Additional information about the milestone or data.
+- **Definition**:  Additional information about the milestone or data.
 - **Data Type**: Text
 - **Limit**: 500 characters.
 
 - ##### `achievements`
-- **Description**:  Milestone Data (per arm/group)
+- **Definition**:  Milestone Data (per arm/group)
 - **Data Type**: FlowStats[]
 - **Limit**: 40 characters.
 
 ##### FlowStats Fields
 
 - ##### `groupId`
-- **Description**:  Milestone Data (per arm/group)
+- **Definition**:  Milestone Data (per arm/group)
 - **Data Type**: ID
 
 - ##### `groupId`
-- **Description**:  group id
+- **Definition**:  group id
 - **Data Type**: Type
 - **Limit**: 500 characters.
 
 - ##### `numSubjects`
-- **Description**:   number of subjects
+- **Definition**:   number of subjects
 - **Data Type**: ID
 
 - ##### `numUnits`
-- **Description**:  number of units
+- **Definition**:  number of units
 
 
 ####  FlowDropWithdraw
@@ -514,12 +514,12 @@ Avoids snowflaking the schema while preserving all contact information for downs
 ##### Fields
 
 ###### `type`
-- **Description**:  Reason why participants did not complete the study or period.
+- **Definition**:  Reason why participants did not complete the study or period.
 - **Data Type**: Text
 
 
 ###### `comment`
-- **Description**:A brief description of the reason for non-completion, if "Other" Reason Not Completed Type is selected.
+- **Definition**:A brief description of the reason for non-completion, if "Other" Reason Not Completed Type is selected.
 - **Data Type**: Text
 - **Limit**: 500 characters.
 - * Other Reason [*] - A brief description of the reason for non-completion, if "Other" Reason Not Completed Type is selected
@@ -534,13 +534,13 @@ Avoids snowflaking the schema while preserving all contact information for downs
 ##### Fields
 
 ###### `groupId`
-- **Description**:  Internally generated ID for reason not completed per arm/group
+- **Definition**:  Internally generated ID for reason not completed per arm/group
 
 ###### `comment`
-- **Description**:  Reason why participants did not complete the study or period, for each Reason Not Completed.
+- **Definition**:  Reason why participants did not complete the study or period, for each Reason Not Completed.
 
 ###### `numSubjects`
-- **Description**:  Number of participants in each arm or group that did not complete the study or period, for each Reason Not Completed.
+- **Definition**:  Number of participants in each arm or group that did not complete the study or period, for each Reason Not Completed.
 
 **FLOW PERIOD DUPLICATE HANDLING**
 
@@ -552,6 +552,105 @@ Avoids snowflaking the schema while preserving all contact information for downs
 - This assumes multiple entries represent cumulative enrollment or separate cohorts within the same period.
 
 - **Limitation:** If entries represent corrections (not additions), totals may  be inflated.
+
+
+
+## Outcome measures module
+
+- **Index Field:** `resultsSection.outcomeMeasuresModule.outcomeMeasures`
+- **Definition**: "Outcome measure" means a pre-specified measurement that is used to determine the effect of an experimental variable on participants in the study. 
+- **DataType**: OutcomeMeasure[]
+
+##### Fields
+
+###### `type`
+- **Definition**:  The type of outcome measure
+- **DataType**: Enum(OutcomeMeasureType)
+**Enum Values**:
+- * PARTICIPANT - Participant
+- * CARE_PROVIDER - Care Provider
+- * INVESTIGATOR - Investigator
+- * OUTCOMES_ASSESSOR - Outcomes Assessor**
+
+###### `title`
+- **Definition**: Name of the specific outcome measure.
+- **Limit**: 255 characters.
+- **DataType**: Text
+
+
+###### `description`
+- **Definition**: Additional information about the outcome measure, including a description of the metric used to characterize the specific outcome measure, if not included in the Outcome Measure Title.
+- **Limit**: 999 characters.
+- **DataType**: Text
+- 
+
+###### `populationDescription` 
+- **Definition**: If the Number of Participants Analyzed or Number of Units Analyzed differs from the number of participants or units assigned to the arm or comparison group, 
+      brief description of the reason for the difference (such as how the analysis population was determined).
+- **Limit**: 500 characters.
+- **DataType**: Text
+
+###### `reportingStatus`
+- **Definition**:  Whether there is Outcome Measure Data reported
+- **DataType**: Enum(ReportingStatus)
+
+**Enum Values**:
+- * NOT_POSTED - Not Posted
+- * POSTED - Posted
+
+###### `anticipatedPostingDate`
+- **Definition**:  If Outcome Measure Data are not included for an outcome measure, the expected month and year they will be submitted.
+- **DataType**: PartialDate
+
+###### `paramType`
+- **Definition**:  The type of data for the outcome measure.
+- **DataType**: Enum(MeasureParam)
+
+**Enum Values**:
+- * GEOMETRIC_MEAN - Geometric Mean
+- *GEOMETRIC_LEAST_SQUARES_MEAN - Geometric Least Squares Mean
+- *LEAST_SQUARES_MEAN - Least Squares Mean
+- *LOG_MEAN - Log Mean
+- *MEAN - Mean
+- *MEDIAN - Median
+- *NUMBER - Number
+- *COUNT_OF_PARTICIPANTS - Count of Participants
+- *COUNT_OF_UNITS - Count of Units
+
+
+###### `dispersionType` 
+- **Definition**: Measure of Dispersion/Precision
+- **DataType**: Text
+- 
+###### `unitOfMeasure` 
+- **Definition**: An explanation of what is quantified by the data (for example, participants, mm Hg), for each outcome measure.
+- **DataType**: Text
+- **Limit**: 40 characters.
+- 
+###### `calculatePct` 
+- **Definition**: 	
+percentage of OutcomeMeasurementValue/OutcomeMeasureDenomCountValue (internally calculated)
+- **DataType**: Boolean
+
+###### `timeFrame` 
+- **Definition**: Time point(s) at which the measurement was assessed for the specific metric used. The description of the time point(s) of assessment must be specific to the outcome measure 
+    and is generally the specific duration of time over which each participant is assessed (not the overall duration of the study).
+- **DataType**: Text
+- **Limit**: 255 characters.
+
+###### `typeUnitsAnalyzed` 
+- **Definition**: f the analysis is based on a unit other than participants, a description of the unit of analysis (for example, eyes, lesions, implants).
+- **DataType**: Text
+- **Limit**: 40 characters.
+
+###### `denomUnitsSelected` 
+- **Definition**: OutcomeMeasureTypeUnitsAnalyzed
+- **DataType**: Text
+
+
+
+
+
 
 
 
