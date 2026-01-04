@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Tuple
 import logging
 import pandas as pd
 import numpy as np

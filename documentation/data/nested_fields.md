@@ -1,9 +1,6 @@
 
 ### Source: https://clinicaltrials.gov/data-api/about-api/study-data-structure
 
-
-### NESTED FIELDS
-
 ## SponsorCollaboratorsModule
 
 ### sponsors
@@ -124,7 +121,7 @@
 - **Limit**: 999 characters
 - **Required**: Conditional
 
-#### Nested Fields
+#### Nested
 ######  `interventionNames`
 - **Definition**: Names of interventions associated with this arm. References `interventions[].name` within the same study.
 - **Data Type**: Array of Text
@@ -292,7 +289,7 @@ This ensures patient matching prioritizes study-level recruitment status while f
 - **Definition**: Lat and Lon
 - **Data Type**: Dict
 
-#### Nested Fields
+#### Nested
 ##### `contacts`
 --- Saved as a JSON blob
 
@@ -648,313 +645,388 @@ percentage of OutcomeMeasurementValue/OutcomeMeasureDenomCountValue (internally 
 - **DataType**: Text
 
 
+##### Nested 
+###### `OutcomeGroup`
+###### `groups`
+- **Definition**:  Arms or comparison groups in the study, 
+- including all arms or comparison groups based on the pre-specified protocol and/or statistical analysis plan.
+
+- **DataType**: OutcomeGroup[id, title, description]
+
+###### `OutcomeDenom`
+###### `denoms`
+
+###### OutcomeDenom Fields
+###### `units`
+- **Definition**:  If the analysis is based on a unit other than participants, the number of units for which an outcome was measured and analyzed, for each outcome measure and each arm/group.
+- **DataType**: Text
+
+
+###### `counts`
+- **Definition**:   Number of participants for whom an outcome measure was measured and analyzed, for each outcome measure and each arm/group.
+- **DataType**: DenomCount[groupId, value]
+
+
+###### `OutcomeClass`
+###### `groups`
+- **Definition**:  Arms or comparison groups in the study, 
+- including all arms or comparison groups based on the pre-specified protocol and/or statistical analysis plan.
+
+- **DataType**: MeasureClass[]
+
+
+
+###### `counts`
+- **Definition**:   Number of participants for whom an outcome measure was measured and analyzed, for each outcome measure and each arm/group.
+- **DataType**: DenomCount[groupId, value]
 
 
 
 
 
 
+## adverseEventsModule
+
+- **Index Field:** `resultsSection.adverseEventsModule`
+- **Definition**: Information for completing three tables summarizing adverse events.
+- 1.All-Cause Mortality: 
+- 2.Serious Adverse Events:
+- 3.Other (Not Including Serious) Adverse Events: 
+- 
+- **DataType**: AdverseEventsModule
+
+
+##### Fields
+###### `frequencyThreshold`
+- **Definition**: The frequency of occurrence that an Other (Not Including Serious) Adverse Event must exceed, within any arm or comparison group, 
+to be reported in the Other (Not Including Serious) Adverse Event table. 
+- 
+The number for the frequency threshold must be less than or equal to the allowed maximum (5%).
+For example, a threshold of 5 percent indicates that all Other (Not Including Serious) Adverse Events with a frequency greater than 5 percent within at least one arm or comparison group are reported.
+
+- **DataType**: Text
+
+
+###### `timeFrame`
+- **Definition**: The specific period of time over which adverse event data were collected.
+- 
+- **Limit**: 500 characters.
+- **DataType**: Text
+
+###### `description`
+- **Definition**:  If the adverse event information collected in the clinical study is collected based on a different definition of adverse event and/or serious adverse event than the standard Adverse Events definition, 
+   a brief description of how the definitions differ.
+- **DataType**: Text
+
+
+###### `allCauseMortalityComment`
+- **Definition**:  If the adverse event information collected in the clinical study is collected based on a different definition of adverse event and/or serious adverse event than the standard Adverse Events definition, 
+   a brief description of how the definitions differ.
+
+- **DataType**: Markup
+
+
+##### Nested
+###### `eventGroups`
+- **Definition**:  rms or comparison groups in the study, 
+- including all arms or comparison groups based on the pre-specified protocol and/or statistical analysis plan.
+
+- **DataType**: EventGroup[]
+
+##### eventGroups Fields
+
+###### `id`
+- **Definition**: Internal group id
+- **DataType**: Text
+
+###### `title`
+- **Definition**: Label used to identify each arm or comparison group.
+- **DataType**: Text
+- **Limit**: >=4 and <= 100 characters.
+
+###### `description`
+- **Definition**: Brief description of each arm or comparison group. 
+- **DataType**: Text
+- **Limit**: 1500 characters.
+
+###### `deathsNumAtRisk`
+- **Definition**: Overall number of participants, in each arm/group, included in the assessment of deaths due to any cause
+- **DataType**: integer 
+
+###### `seriousNumAffected`
+- **Definition**: Overall number of participants affected by one or more Serious Adverse Events, for each arm/group.
+- **DataType**: integer 
+
+###### `seriousNumAtRisk`
+- **Definition**: Overall number of participants included in the assessment of serious adverse events (that is, the denominator for calculating frequency of serious adverse events), for each arm/group.
+- **DataType**: integer 
+
+###### `otherNumAffected`
+- **Definition**: Overall number of participants affected, for each arm/group, by at least one Other (Not Including Serious) Adverse Event(s) reported in the table.
+- **DataType**: integer 
+
+###### `otherNumAtRisk`
+- **Definition**: Overall number of participants, for each arm/group, included in the assessment of Other (Not Including Serious) 
+  Adverse Events during the study (that is, the denominator for calculating frequency of Other (Not Including Serious) Adverse Events).
+- **DataType**: integer 
+
+
+
+###### `eventGroups`
+- **Definition**:  rms or comparison groups in the study, 
+- including all arms or comparison groups based on the pre-specified protocol and/or statistical analysis plan.
+
+- **DataType**: EventGroup[]
+
+##### eventGroups Fields
+
+###### `id`
+- **Definition**: Internal group id
+- **DataType**: Text
+
+###### `title`
+- **Definition**: Label used to identify each arm or comparison group.
+- **DataType**: Text
+- **Limit**: >=4 and <= 100 characters.
+
+###### `description`
+- **Definition**: Brief description of each arm or comparison group. 
+- **DataType**: Text
+- **Limit**: 1500 characters.
+
+###### `deathsNumAtRisk`
+- **Definition**: Overall number of participants, in each arm/group, included in the assessment of deaths due to any cause
+- **DataType**: integer 
+
+###### `seriousNumAffected`
+- **Definition**: Overall number of participants affected by one or more Serious Adverse Events, for each arm/group.
+- **DataType**: integer 
+
+###### `seriousNumAtRisk`
+- **Definition**: Overall number of participants included in the assessment of serious adverse events (that is, the denominator for calculating frequency of serious adverse events), for each arm/group.
+- **DataType**: integer 
+
+###### `otherNumAffected`
+- **Definition**: Overall number of participants affected, for each arm/group, by at least one Other (Not Including Serious) Adverse Event(s) reported in the table.
+- **DataType**: integer 
+
+###### `otherNumAtRisk`
+- **Definition**: Overall number of participants, for each arm/group, included in the assessment of Other (Not Including Serious) 
+  Adverse Events during the study (that is, the denominator for calculating frequency of Other (Not Including Serious) Adverse Events).
+- **DataType**: integer 
 
 
 
 
-    "primary_outcomes": {
-        **Index Field:** "protocolSection.outcomesModule.primaryOutcomes",
-        **Object_type**: "array_of_dicts",
-        **Table_name**: "study_outcomes",
-        **Fields**: [
-            ("measure", "measure"),
-            ("description", "description"),
-            ("timeFrame", "timeFrame")
-        ],
-        "transformer_method": "extract_outcomes",
-        "outcome_type": "PRIMARY",
-    },
+###### `seriousEvents`
+- **Definition**: A table of all anticipated and unanticipated serious adverse events, grouped by organ system, with the number and frequency of such events by arm or comparison group of the clinical study.
 
-    "secondary_outcomes": {
-        **Index Field:** "protocolSection.outcomesModule.secondaryOutcomes",
-        **Object_type**: "array_of_dicts",
-        **Table_name**: "study_outcomes",
-        **Fields**: [
-            ("measure", "measure"),
-            ("description", "description"),
-            ("timeFrame", "timeFrame")
-        ],
-        "transformer_method": "extract_outcomes",
-        "outcome_type": "SECONDARY",
-    },
+- **DataType**: AdverseEvent[]
 
-    "other_outcomes": {
-        **Index Field:** "protocolSection.outcomesModule.otherOutcomes",
-        **Object_type**: "array_of_dicts",
-        **Table_name**: "study_outcomes",
-        **Fields**: [
-            ("measure", "measure"),
-            ("description", "description"),
-            ("timeFrame", "timeFrame")
-        ],
-        "transformer_method": "extract_outcomes",
-        "outcome_type": "OTHER",
-    },
+##### seriousEvents Fields
 
-    
-    "phases": {
-        **Index Field:** "protocolSection.designModule.phases",
-        **Object_type**: "simple_array",
-        **Table_name**: "phases",
-        **Bridge_table_name**: "study_phases",
-        **Field_name**: "phase",
-        "transformer_method": "extract_study_phases"
-    },
+###### `term`
+- **Definition**: Descriptive word or phrase for the adverse event.
+- **DataType**: Text
+- **Limit**: 100 characters.
+
+###### `organSystem`
+- **Definition**: High-level categories used to group adverse event terms by body or organ system. 
+- **DataType**: Text
 
 
-    "ipd_info_types": {
-        **Index Field:** "protocolSection.ipdSharingStatementModule.infoTypes",
-        **Object_type**: "simple_array",
-        **Table_name**: "ipd_info_types",
-        **Bridge_table_name**: "study_ipd_info_types",
-        **Field_name**: "info_type",
-        "transformer_method": "extract_ipd_info_types"
-    },
-
-    "secondary_id_infos": {
-        **Index Field:** "protocolSection.identificationModule.secondaryIdInfos",
-        **Object_type**: "array_of_dicts",
-        **Table_name**: "secondary_ids",
-        **Bridge_table_name**: "study_secondary_ids",
-        **Fields**: [
-            ("id", "id"),
-            (**Object_type**, **Object_type**),
-            ("domain", "domain"),
-            ("link", "link")
-        ],
-        "transformer_method": "extract_id_infos"
-
-    },
-    "nct_id_aliases": {
-        **Index Field:** "protocolSection.identificationModule.nctIdAliases",
-        **Object_type**: "simple_array",
-        **Table_name**: "nct_aliases",
-        **Bridge_table_name**: "study_nct_aliases",
-        **Field_name**: "alias_nct_id",
-        "transformer_method": "extract_nct_id_aliases"
-    },
-
-    # ===== DERIVED SECTION (MeSH) =====
-    # CONDITION MESH TERMS
+###### `sourceVocabulary`
+- **Definition**: Standard terminology, controlled vocabulary, or classification and version from which adverse event terms are drawn, if any (for example, SNOMED CT, MedDRA 10.0).
+  IF BLANK, the value specified as the Source Vocabulary for Table Default should be used.
+- **DataType**: Text
+- **Limit**: 20 characters.
 
 
-    "condition_mesh_terms": {
-        **Index Field:** "derivedSection.conditionBrowseModule.meshes",
-        **Object_type**: "array_of_dicts",
-        **Fields**: [
-            ("id", "id"),
-            ("term", "term")
-        ],
-        **Table_name**: "condition_mesh_terms",
-        **Bridge_table_name**: "study_conditions_mesh",
-        "is_primary": True,
-        "transformer_method": "extract_condition_mesh"
-    },
+###### `assessmentType`
+- **Definition**: The type of approach taken to collect adverse event information.
+- **DataType**: Text
+- **Limit**: 20 characters.
 
-    "condition_mesh_ancestors": {
-        **Index Field:** "derivedSection.conditionBrowseModule.ancestors",
-        **Object_type**: "array_of_dicts",
-        **Fields**: [
-            ("id", "id"),
-            ("term", "term")
-        ],
-        **Table_name**: "condition_mesh_terms",
-        **Bridge_table_name**: "study_conditions_mesh",
-        "is_primary": False,
-        "transformer_method": "extract_condition_mesh"
-    },
+###### `notes`
+- **Definition**: Additional relevant information about the adverse event.
+- **DataType**: Text
+- **Limit**: 250 characters.
 
-    "intervention_mesh_terms": {
-        **Index Field:** "derivedSection.interventionBrowseModule.meshes",
-        **Object_type**: "array_of_dicts",
-        **Fields**: [
-            ("id", "id"),
-            ("term", "term")
-        ],
-        **Table_name**: "intervention_mesh_terms",
-        **Bridge_table_name**: "study_interventions_mesh",
-        "is_primary": True,
-        "transformer_method": "extract_intervention_mesh"
-    },
-
-    "intervention_mesh_ancestors": {
-        **Index Field:** "derivedSection.interventionBrowseModule.ancestors",
-        **Object_type**: "array_of_dicts",
-        **Fields**: [
-            ("id", "id"),
-            ("term", "term")
-        ],
-        **Table_name**: "intervention_mesh_terms",
-        **Bridge_table_name**: "study_interventions_mesh",
-        "is_primary": False,
-        "transformer_method": "extract_intervention_mesh"
-    },
-
-    "large_documents": {
-        **Index Field:** "documentSection.largeDocumentModule.largeDocs",
-        **Object_type**: "array_of_dicts",
-        **Fields**: [
-            ("typeAbbrev", "typeAbbrev"),
-            ("hasProtocol", "hasProtocol"),
-            ("hasSap", "hasSap"),
-            ("hasIcf", "hasIcf"),
-            ("label", "label"),
-            ("date", "date"),
-            ("uploadDate", "uploadDate"),
-            ("filename", "filename"),
-            ("size", "size"),
-        ],
-        **Table_name**: "study_documents",
-        "transformer_method": "extract_large_documents"
-    },
-
-    "unposted_events": {
-        **Index Field:** "annotationSection.annotationModule.unpostedAnnotation.unpostedEvents",
-        **Object_type**: "array_of_dicts",
-        **Fields**: [
-            (**Object_type**, **Object_type**),
-            ("date", "date"),
-            ("dateUnknown", "dateUnknown"),
-        ],
-        **Table_name**: "unposted_events",
-        **Bridge_table_name**: "study_unposted_events",
-        "transformer_method": "extract_unposted_events"
-    },
-
-    "violation_events": {
-        **Index Field:** "annotationSection.annotationModule.violationAnnotation.violationEvents",
-        **Object_type**: "array_of_dicts",
-        **Fields**: [
-            (**Object_type**, **Object_type**),
-            ("description", "description"),
-            ("creationDate", "creationDate"),
-            ("issuedDate", "issuedDate"),
-            ("releaseDate", "releaseDate"),
-            ("postedDate", "postedDate"),
-        ],
-        **Table_name**: "violation_events",
-        **Bridge_table_name**: "study_violation_events",
-        "transformer_method": "extract_violation_events"
-    },
-
-    "removed_countries": {
-        **Index Field:** "derivedSection.miscInfoModule.removedCountries",
-        **Object_type**: "simple_array",
-        **Table_name**: "countries",
-        **Bridge_table_name**: "study_removed_countries",
-        **Field_name**: "country",
-        "transformer_method": "extract_removed_countries"
-    },
-
-    "submission_infos": {
-        **Index Field:** "derivedSection.miscInfoModule.submissionTracking.submissionInfos",
-        **Object_type**: "array_of_dicts",
-        **Fields**: [
-            ("releaseDate", "releaseDate"),
-            ("unreleaseDate", "unreleaseDate"),
-            ("unreleaseDateUnknown", "unreleaseDateUnknown"),
-            ("resetDate", "resetDate"),
-            ("mcpReleaseN", "mcpReleaseN")
-        ],
-        **Table_name**: "submission_tracking",
-        **Bridge_table_name**: "study_submission_tracking",
-        "transformer_method": "extract_submission_infos"
-    },
+###### `stats`
+- **Definition**: Statistical information for each Serious Adverse Event
+- **DataType**:EventStats[groupId, numEvents, numAffected, numAtRisk]
+- **Fields**: 250 characters.
 
 
-    
- 
-    # # OUTCOME MEASURES
-    # 'outcome_measures_results': {
-    #     'path': 'resultsSection.outcomeMeasuresModule.outcomeMeasures',
-    #     'type': 'array_of_dicts',
-    #     'table_name': 'outcome_measure_results',
-    #     'extract_fields': [
-    #         'type', 'title', 'description', 'populationDescription',
-    #         'reportingStatus', 'anticipatedPostingDate',
-    #         'paramType', 'dispersionType', 'unitOfMeasure',
-    #         'calculatePct', 'timeFrame', 'typeUnitsAnalyzed',
-    #         'denomUnitsSelected'
-    #     ],
-    #     'nested_arrays': {
-    #         'groups': ['id', 'title', 'description'],
-    #         'denoms': ['units', 'counts'],
-    #         'classes': ['title', 'denoms', 'categories'],
-    #         'analyses': [
-    #             'groupIds', 'paramType', 'paramValue',
-    #             'dispersionType', 'dispersionValue',
-    #             'statisticalMethod', 'statisticalComment',
-    #             'pValue', 'pValueComment',
-    #             'ciNumSides', 'ciPctValue', 'ciUpperLimit', 'ciLowerLimit',
-    #             'estimateComment', 'testedNonInferiority',
-    #             'nonInferiorityType', 'nonInferiorityComment',
-    #             'otherAnalysisDescription', 'groupDescription'
-    #         ]
-    #     }
-    # },
-    #
-    # # ADVERSE EVENT GROUPS
-    # 'adverse_event_groups': {
-    #     'path': 'resultsSection.adverseEventsModule.eventGroups',
-    #     'type': 'array_of_dicts',
-    #     'table_name': 'ae_groups',
-    #     'bridge_table_name': 'study_ae_groups',
-    #     'extract_fields': [
-    #         'id', 'title', 'description',
-    #         'deathsNumAffected', 'deathsNumAtRisk',
-    #         'seriousNumAffected', 'seriousNumAtRisk',
-    #         'otherNumAffected', 'otherNumAtRisk'
-    #     ]
-    # },
-    #
-    # # SERIOUS ADVERSE EVENTS
-    # 'serious_adverse_events': {
-    #     'path': 'resultsSection.adverseEventsModule.seriousEvents',
-    #     'type': 'array_of_dicts',
-    #     'table_name': 'adverse_events',
-    #     'extract_fields': [
-    #         'term', 'organSystem', 'sourceVocabulary',
-    #         'assessmentType', 'notes'
-    #     ],
-    #     'nested_arrays': {
-    #         'stats': ['groupId', 'numEvents', 'numAffected', 'numAtRisk']
-    #     },
-    #     'severity': 'SERIOUS'
-    # },
-    #
-    # # OTHER ADVERSE EVENTS
-    # 'other_adverse_events': {
-    #     'path': 'resultsSection.adverseEventsModule.otherEvents',
-    #     'type': 'array_of_dicts',
-    #     'table_name': 'adverse_events',
-    #     'extract_fields': [
-    #         'term', 'organSystem', 'sourceVocabulary',
-    #         'assessmentType', 'notes'
-    #     ],
-    #     'nested_arrays': {
-    #         'stats': ['groupId', 'numEvents', 'numAffected', 'numAtRisk']
-    #     },
-    #     'severity': 'OTHER'
-    # }
 
-    }
+###### `otherEvents`
+- **Definition**:Other (Not Including Serious) Adverse Events - similar to Serious AE
+
+- **DataType**: AdverseEvent[]
+
+##### otherEvents Fields
+
+###### `term`
+- **Definition**: Descriptive word or phrase for the adverse event.
+- **DataType**: Text
+- **Limit**: 100 characters.
+
+###### `organSystem`
+- **Definition**: High-level categories used to group adverse event terms by body or organ system. 
+- **DataType**: Text
 
 
-### design_who_masked
-**Index Field:** protocolSection.designModule.designInfo.maskingInfo.whoMasked
+###### `sourceVocabulary`
+- **Definition**: Standard terminology, controlled vocabulary, or classification and version from which adverse event terms are drawn, if any (for example, SNOMED CT, MedDRA 10.0).
+  IF BLANK, the value specified as the Source Vocabulary for Table Default should be used.
+- **DataType**: Text
+- **Limit**: 20 characters.
 
-**Definition**: The party or parties involved in the clinical trial who are prevented from having knowledge of the interventions assigned to individual participants
 
-**DataType**: [Enum(WhoMasked)]
+###### `assessmentType`
+- **Definition**: The type of approach taken to collect adverse event information.
+- **DataType**: Text
+- **Limit**: 20 characters.
 
+###### `notes`
+- **Definition**: Additional relevant information about the adverse event.
+- **DataType**: Text
+- **Limit**: 250 characters.
+
+###### `stats`
+- **Definition**: Statistical information for each Other  Event
+- **DataType**:EventStats[]
+- **Fields**: [groupId, numEvents, numAffected, numAtRisk]
+
+
+
+## annotationModule
+
+### violationEvents
+
+**Index Field(s):** 
+- `annotationSection.annotationModule.violationAnnotation.violationEvents`
+
+- **Description**: Organizations responsible for the study.
+- **DataType**: ViolationEvent[]
+
+
+##### violationEvents Fields
+
+###### `type`
+- **Definition**: Descriptive word or phrase for the adverse event.
+- **Data Type**: Enum(ViolationEventType)
 **Enum Values**:
-* PARTICIPANT - Participant
-* CARE_PROVIDER - Care Provider
-* INVESTIGATOR - Investigator
-* OUTCOMES_ASSESSOR - Outcomes Assessor
+- VIOLATION_IDENTIFIED - Violation Identified by FDA
+- CORRECTION_CONFIRMED - Correction Confirmed by FDA
+- PENALTY_IMPOSED - Penalty Imposed by FDA
+- ISSUES_IN_LETTER_ADDRESSED_CONFIRMED - Issues in letter addressed; confirmed by FDA.
+
+
+###### `description`
+- **Definition**: description
+- **DataType**: Text
+
+###### `creationDate`
+- **Definition**: Date the violation entered in PRS
+- **DataType**: NormalizedDate 
+
+###### `issuedDate`
+- **Definition**: Date the FDA issued the violation
+- **DataType**: NormalizedDate 
+
+###### `releaseDate`
+- **Definition**: Date the study record was submitted
+- **DataType**: NormalizedDate 
+
+###### `postedDate`
+- **Definition**: Date the violation is available on clinicaltrials.gov
+- **DataType**: NormalizedDate 
+---
+
+## conditionBrowseModule
+
+#### meshes 
+
+**Index Field(s):** `derivedSection.conditionBrowseModule.meshes`
+
+- **Description**: MeSH terms of Condition/Diseases field
+- **DataType**: Mesh[]
+
+#### meshes Fields
+
+###### `id`
+- **Definition**: MeSH ID
+- **DataType**: Text
+
+###### `term`
+- **Definition**: MeSH Heading
+- **DataType**: Text
+
+
+#### ancestors 
+
+**Index Field(s):** `derivedSection.conditionBrowseModule.ancestors`
+
+- **Description**: Ancestor (higher level and more broad) terms of Condition MeSH terms in MeSH Tree hierarchy
+- **DataType**: Mesh[]
+
+#### ancestors Fields
+
+###### `id`
+- **Definition**: MeSH ID
+- **DataType**: Text
+
+###### `term`
+- **Definition**: MeSH Heading
+- **DataType**: Text
+
+#### browseLeaves 
+
+**Index Field(s):** `derivedSection.conditionBrowseModule.browseLeaves`
+
+- **Description**: Leaf browsing topics for Condition field
+- **DataType**: BrowseLeaf[]
+
+#### browseLeaves Fields
+
+###### `id`
+- **Definition**: MeSH ID
+- **DataType**: Text
+
+###### `asFound`
+- **Definition**: Normalized Condition term used to find the topic
+- **DataType**: Text
+
+###### `relevance`
+- **Definition**: Normalized Condition term used to find the topic
+- **Data Type**: Enum(BrowseLeafRelevance)
+**Enum Values**:
+- LOW - low
+- HIGH - high
+
+
+
+#### browseBranches 
+
+**Index Field(s):** `derivedSection.conditionBrowseModule.browseBranches`
+
+- **Description**: Branch browsing topics for Condition field
+- **DataType**: BrowseBranch[]
+
+#### browseBranches Fields
+
+###### `abbrev`
+- **Definition**: MeSH abbreviation
+- **DataType**: Text
+
+###### `name`
+- **Definition**: name
+- **DataType**: Text
+
+###### `relevance`
+- **Definition**: Normalized Condition term used to find the topic
+- **Data Type**: Enum(BrowseLeafRelevance)
+**Enum Values**:
+- LOW - low
+- HIGH - high

@@ -35,6 +35,7 @@
 - **Index Field:** `protocolSection.identificationModule.orgStudyIdInfo.id`
 - **Definition**: Organization's Unique Protocol Identification Number
 - **Data Type**: Text
+- **Data Type**: Text
 - **Limit**: 30 characters.
 
 ## Description
@@ -289,6 +290,23 @@ Bulleted list for each criterion below the headers "Inclusion Criteria" and "Exc
 
 
 ## Status
+
+### has_expanded_access
+- **Index Field:** `protocolSection.statusModule.expandedAccessInfo.hasExpandedAcces`
+- **Definition**:  Whether there is expanded access to the investigational product for patients who do not qualify for enrollment in a clinical trial.
+- **DataType**: Boolean 
+
+### expanded_access_nct
+- **Index Field:** `protocolSection.statusModule.expandedAccessInfo.nctId`
+- **Definition**:  If expanded access is available, the NCT number of the expanded access record.
+- **DataType**: Boolean 
+
+
+### expanded_access_status
+- **Index Field:** `protocolSection.statusModule.expandedAccessInfo.statusForNctId`
+- **Definition**: Recruitment status of the EA study that's linked to INT/OBS
+- **DataType**: Boolean 
+
 
 ### overall_status
 - **Index Field:** `protocolSection.statusModule.overallStatus`

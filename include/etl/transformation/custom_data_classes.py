@@ -2,16 +2,6 @@ from dataclasses import dataclass,asdict
 from typing import List, Dict
 
 
-@dataclass
-class OutcomeExtraction:
-    measures: List
-    groups: List
-    denom_units: List
-    denom_counts: List
-    measurements: List
-    analyses: List
-    comparison_groups: List
-
 
 @dataclass
 class StudyResult:

@@ -175,6 +175,7 @@ It is the responsibility of the sponsor or investigator to ensure that the study
 - **DataType**: Official[]
 - **Reason**: Officials lack contact information and serve administrative/ oversight purposes only. patient matching relies on location contacts, not officials
 
+----
 
 ## References
 
@@ -197,7 +198,73 @@ It is the responsibility of the sponsor or investigator to ensure that the study
 - **Reason**: No analytical value
 
 
+---
+
 ### baseline_measures_module
 - **Index Field**: `resultsSection.baselineMeasuresModule`
 - **Description**: A table of demographic and baseline measures and data collected by arm or comparison group and for the entire population of participants in the clinical study.
-- **Reason for Exclusion**: No analytical value. Documentation/compliance data
+- **Reason for Exclusion**: Contains metadata about what baseline demographics were collected (age, gender, etc.) but not the actual measured values. 
+  No analytical value. Documentation/compliance data
+
+
+
+### annotationModule
+- **Index Field:** `annotationSection.annotationModule`
+- **Content:** Administrative metadata tracking results submission/QA workflow
+- **Event Types:** RELEASE (results submitted), UNRELEASE (withdrawn), RESET (pulled back for revision)
+
+**Reason for Exclusion:**
+The annotation module tracks ClinicalTrials.gov's internal submission and quality assurance workflow, not clinical trial data. It contains administrative events like when results were submitted, withdrawn, or reset during the review process.
+
+**Example:**
+```json
+{
+  "unpostedResponsibleParty": "CrossComm, Inc.",
+  "unpostedEvents": [
+    {"type": "RELEASE", "date": "2024-09-20"},
+    {"type": "RESET", "date": "2024-10-14"}
+  ]
+}
+```
+
+This indicates results were submitted Sept 20, then pulled back Oct 14 for revision.
+
+**Patient Matching Impact:** None - patients don't query by submission workflow status
+
+**R&D Impact:** NONE - whether results were submitted/reset doesn't predict trial success or provide clinical insights. 
+        The actual posted results (outcome_measures) are what matter.
+---
+
+### documentSection / largeDocModule
+
+- **Index Field:** `documentSection`, `protocolSection.largeDocModule`
+- **Content:** File attachments (protocols, consent forms, statistical analysis plans)
+  - **Reason for Exclusion:** Links to documents, not structured data. Files would need separate download and parsing. 
+            Study protocols and documents are not used in patient matching or R&D analytics models. 
+---
+
+
+### miscInfoModule
+- **Index Field:** `derivedSection.miscInfoModule`
+- **Content:** System metadata, removed countries, results submission workflow tracking
+
+**Reason for Exclusion:**
+
+**1. Version Holder**
+- System metadata (last successful ClinicalTrials.gov data ingestion timestamp)
+- Not clinical or analytical data
+- No relevance to patient matching or R&D analytics
+
+**2. Removed Countries**
+- Historical record of countries where all study locations were closed/removed
+- Already reflected in current study_locations table (active sites only)
+- Patient matching uses current locations, not historical changes
+- Weak analytical signal for R&D (doesn't predict outcomes)
+
+**3. Submission Tracking**
+- Detailed workflow metadata (release dates, reset dates, Major Comment Postings)
+- Tracks ClinicalTrials.gov QA/review cycles
+- Similar to annotationModule - administrative process, not clinical data
+- Number of submission resets/MCPs is weak predictor of trial quality
+
+

@@ -12,7 +12,7 @@ SINGLE_FIELDS = {
     # Sponsor
     "responsible_party": "protocolSection.sponsorCollaboratorsModule.responsibleParty.type",
 
-    # Design (single values)
+    # Design
     "study_type": "protocolSection.designModule.studyType",
     "patient_registry": "protocolSection.designModule.patientRegistry",
     "enrollment_type": "protocolSection.designModule.enrollmentInfo.type",
@@ -47,12 +47,15 @@ SINGLE_FIELDS = {
     "completion_date_type": "protocolSection.statusModule.completionDateStruct.type",
     "why_stopped": "protocolSection.statusModule.whyStopped",
     "has_expanded_access": "protocolSection.statusModule.expandedAccessInfo.hasExpandedAccess",
+    "expanded_access_nct": "protocolSection.statusModule.expandedAccessInfo.nctId",
+    "expanded_access_status": "protocolSection.statusModule.expandedAccessInfo.statusForNctId",
     # Oversight
     "has_dmc": "protocolSection.oversightModule.oversightHasDmc",
     "is_fda_regulated_drug": "protocolSection.oversightModule.isFdaRegulatedDrug",
     "is_fda_regulated_device": "protocolSection.oversightModule.isFdaRegulatedDevice",
     "is_unapproved_device": "protocolSection.oversightModule.isUnapprovedDevice",
     "is_us_export": "protocolSection.oversightModule.isUsExport",
+
     # Individual participant data
     "ipd_sharing": "protocolSection.ipdSharingStatementModule.ipdSharing",
     "ipd_desc": "protocolSection.ipdSharingStatementModule.description",
@@ -91,98 +94,78 @@ SINGLE_FIELDS = {
 }
 
 NESTED_FIELDS = {
+    #statusModule
+    "expanded_access": {
+        "index_field": "protocolSection.statusModule.expandedAccessInfo",
+        "object_type": "simple dict",
+        "fields": ['name', 'class'],
+    },
+
     #sponsorCollaboratorsModule
-    "sponsor": { #NOT NESTED BUT TREATED AS A SEPARATE DIM
+    "sponsor": { #SCALAR BUT TREATED AS A SEPARATE DIM
         "index_field": "protocolSection.sponsorCollaboratorsModule.leadSponsor",
         "object_type": "simple dict",
-        "fields": [
-            ("lead_sponsor_name", "name"),
-            ("lead_sponsor_class", "class"),
-        ],
-        "table_name": "sponsors",
-        "bridge_table_name": "study_sponsors",
-        "transformer_method": "transform_sponsors",
+        "fields": ['name', 'class']
     },
     "collaborators": {
         "index_field": "protocolSection.sponsorCollaboratorsModule.collaborators",
         "object_type": "array_of_dicts",
-        "fields": [
-            ("sponsor_name", "name"),
-            ("sponsor_class", "class"),
-        ],
-        "table_name": "sponsor",
-        "bridge_table_name": "study_sponsors",
-        "transformer_method": "transform_sponsors",
+        "fields": ['name', 'class']
     },
+
     #conditionsModule
     "conditions": {
         "index_field": "protocolSection.conditionsModule.conditions",
         "object_type": "simple_array",
-        "table_name": "conditions",
-        "bridge_table_name": "bridge_study_conditions",
         "field_name": "condition_name",
-        "transformer_method": "transform_conditions",
     },
     "keywords": {
         "index_field": "protocolSection.conditionsModule.keywords",
         "object_type": "simple_array",
-        "table_name": "keywords",
-        "bridge_table_name": "bridge_study_keywords",
-        "field_name": "keyword",
-        "transformer_method": "transform_keywords",
+        "field_name": "keyword"
     },
+
     #armsInterventionsModule
     "interventions": {
         "index_field": "protocolSection.armsInterventionsModule.interventions",
         "object_type": "array_of_dicts",
-        "fields": [
-            ("intervention_name", "name"),
-            ("intervention_desc", "description"),
-            ("intervention_type", "type"),
-        ],
-        "table_name": "interventions",
-        "bridge_table_name": "bridge_study_interventions",
-        "transformer_method": "transform_interventions",
+        "fields": ['name', 'description', 'type']
+
     },
     "arm_groups": {
         "index_field": "protocolSection.armsInterventionsModule.armGroups",
         "object_type": "array_of_dicts",
-        "table_name": "study_arm_group_interventions",
-        "fields": [
-            ("arm_group_label", "label"),
-            ("arm_group_type", "type"),
-            ("arm_group_desc", "description"),
-        ],
-        "transformer_method": "transform_arm_groups",
+        "fields": ['label', 'type', 'description']
     },
+
+    #outcomesModule
+    "primary_outcomes": {
+        "index_field": "protocolSection.outcomesModule.primaryOutcomes",
+        "object_type": "array_of_dicts",
+        "fields": ['measure', 'description','timeFrame'],
+    },
+    "secondary_outcomes": {
+        "index_field": "protocolSection.outcomesModule.secondaryOutcomes",
+        "object_type": "array_of_dicts",
+        "fields": ['measure', 'description','timeFrame'],
+    },
+    "other_outcomes": {
+        "index_field": "protocolSection.outcomesModule.otherOutcomes",
+        "object_type": "array_of_dicts",
+        "fields": ['measure', 'description','timeFrame'],
+    },
+
     # contactsLocationsModule
     "central_contacts": {
         "index_field": "protocolSection.contactsLocationsModule.centralContacts",
         "object_type": "array_of_dicts",
-        "table_name": "contacts",
-        "bridge_table_name": "study_contacts",
-        "fields": [
-            ("name", "name"),
-            ("role", "role"),
-            ("email", "email"),
-            ("phone", "phone"),
-            ("phoneExt", "phoneExt"),
-        ],
-        "transformer_method": "transform_central_contacts",
+        "fields": ['name', 'role','email', 'phone', 'phoneExt'],
     },
     "locations": {
         "index_field": "protocolSection.contactsLocationsModule.locations",
         "object_type": "array_of_dicts",
-        "table_name": "sites",
-        "bridge_table_name": "study_sites",
-        "fields": [
-            ("site_facility", "facility"),
-            ("city", "city"),
-            ("state", "state"),
-            ("zip", "zip"),
-            ("country", "country"),
-            ("site_status", "status"),
-        ],
+        "fields": ['facility', 'city', 'state', 'zip', 'country', 'status'],
+
         "nested": {
             "geoPoint": {
                 "object_type": "simple_dict",
@@ -191,267 +174,141 @@ NESTED_FIELDS = {
             #contacts are saved as a JSON blob
             "contacts": {
                 "object_type": "nested_array_of_dicts",
-                "table_name": "contacts",
-                "bridge_table_name": "location_contacts",
-                "fields": [
-                    ("name", "name"),
-                    ("role", "role"),
-                    ("email", "email"),
-                    ("phone", "phone"),
-                    ("phoneExt", "phoneExt"),
-                ],
-                "transformer_method": "transform_contacts",
-            },
-        },
-        "transformer_method": "transform_locations",
+                "fields": ['name', 'role','email', 'phone', 'phoneExt'],
+            }
+        }
     },
     #referencesModule
     "references": {
         "index_field": "protocolSection.referencesModule.references",
         "object_type": "array_of_dicts",
-        "table_name": "study_publications",
         "fields": ["pmid", "type"],
-        "transformer_method": "transform_references",
     },
 
     "see_also": {
         "index_field": "protocolSection.referencesModule.seeAlsoLinks",
         "object_type": "array_of_dicts",
-        "table_name": "study_see_also",
-        "fields": ["label",  "url"],
-        "transformer_method": "transform_links",
+        "fields": ["label",  "url"]
     },
 
     "avail_ipds": {
         "index_field": "protocolSection.referencesModule.availIpds",
         "object_type": "array_of_dicts",
-        "table_name": "study_ipds",
-        "fields": ["id", "type", "url", "comment"],
-        "transformer_method": "transform_ipds",
+        "fields": ["id", "type", "url", "comment"]
     },
 
     # participantFlowModule
     'flow_groups': {
         'index_field': 'resultsSection.participantFlowModule.groups',
         'type': 'array_of_dicts',
-        'bridge_table_name': 'study_flow_groups',
-        'fields': ['id', 'title', 'description'],
-        "transformer_method": "transform_flow_groups",
+        'fields': ['id', 'title', 'description']
     },
 
 
     'flow_periods': {
         'index_field': 'resultsSection.participantFlowModule.periods',
         'type': 'array_of_dicts',
-        'bridge_table_name': 'study_flow_periods',
-        'transform_fields': ['title'],
+        'fields': ['title'],
         'nested': {
             'milestones': ['type', 'comment', 'achievements'],
             'dropWithdraws': ['type', 'comment', 'reasons']
-        },
-        "transformer_method": "transform_flow_events",
+        }
     },
 
     # outcomeMeasuresModule
     'outcome_measures': {
         'index_field': 'resultsSection.outcomeMeasuresModule.outcomeMeasures',
         'type': 'array_of_dicts',
-        'transform_fields': [
+        'fields': [
             'type', 'title', 'description', 'populationDescription', 'reportingStatus','anticipatedPostingDate',
             'paramType', 'dispersionType', 'unitOfMeasure', 'calculatePct', 'timeFrame', 'denomUnitsSelected'
             'typeUnitsAnalyzed'],
         'nested': {
             'OutcomeGroup': ['id', 'title', 'description'],
-            'OutcomeDenom': ['units', 'counts' , (['groupId', 'value'])],
+            'OutcomeDenom': ['units', 'counts' , ['groupId', 'value']],
             'OutcomeClass': ['categories', 'comment', 'achievements'],
-
             'OutcomeAnalysis ': ['type', 'comment', 'reasons']
-        },
-        "transformer_method": "transform_flow_events",
+        }
     },
+    #adverseEventsModule
+    'adverse_events': {
+        'index_field': 'resultsSection.adverseEventsModule',
+        'type': 'array_of_dicts',
+        'fields': [
+            'frequencyThreshold', 'timeFrame', 'description', 'allCauseMortalityComment'],
+        'nested': {
+            'eventGroups': ['id', 'title', 'description', 'deathsNumAffected', 'deathsNumAffected', 'deathsNumAtRisk',
+                            'seriousNumAffected', 'seriousNumAtRisk', 'otherNumAffected', 'otherNumAtRisk'],
 
-
-
-
-
-    "primary_outcomes": {
-        "index_field": "protocolSection.outcomesModule.primaryOutcomes",
+            'seriousEvents': ['term', 'organSystem', 'sourceVocabulary', 'notes', ['groupId', 'numEvents', 'numAffected', 'numAtRisk']],
+            'OtherEvent ': ['term', 'organSystem', 'sourceVocabulary', 'notes', ['groupId', 'numEvents', 'numAffected', 'numAtRisk']],
+        }
+    },
+    #annotationModule
+    "violation_events": {
+        "index_field": "annotationSection.annotationModule.violationAnnotation.violationEvents",
         "object_type": "array_of_dicts",
-        "table_name": "study_outcomes",
-        "fields": [
-            ("measure", "measure"),
-            ("description", "description"),
-            ("timeFrame", "timeFrame"),
-        ],
-        "transformer_method": "transform_outcomes",
-        "outcome_type": "PRIMARY",
+        "fields": ['type', 'description', 'creationDate', 'issuedDate',
+                   'releaseDate', 'postedDate'],
     },
-    "secondary_outcomes": {
-        "index_field": "protocolSection.outcomesModule.secondaryOutcomes",
-        "object_type": "array_of_dicts",
-        "table_name": "study_outcomes",
-        "fields": [
-            ("measure", "measure"),
-            ("description", "description"),
-            ("timeFrame", "timeFrame"),
-        ],
-        "transformer_method": "transform_outcomes",
-        "outcome_type": "SECONDARY",
+
+    # conditionBrowseModule
+    "conditions_browse": {
+        "index_field": "derivedSection.conditionBrowseModule",
+        "object_type": "nested_dict",
+        'nested': {
+            'meshes': ['id', 'term'],
+            'ancestors': ['id', 'term'],
+            'browseLeaves': ['id', 'name', 'asFound', 'relevance'],
+            'browseBranches': ['abbrev', 'name']
+        }
+
     },
-    "other_outcomes": {
-        "index_field": "protocolSection.outcomesModule.otherOutcomes",
-        "object_type": "array_of_dicts",
-        "table_name": "study_outcomes",
-        "fields": [
-            ("measure", "measure"),
-            ("description", "description"),
-            ("timeFrame", "timeFrame"),
-        ],
-        "transformer_method": "transform_outcomes",
-        "outcome_type": "OTHER",
+
+    "interventions_browse": {
+        "index_field": "derivedSection.interventionBrowseModule",
+        "object_type": "nested_dict",
+        'nested': {
+            'meshes': ['id', 'term'],
+            'ancestors': ['id', 'term'],
+            'browseLeaves': ['id', 'name', 'asFound', 'relevance'],
+            'browseBranches': ['abbrev', 'name']
+    }
     },
+
+
+
+
+
+
 
     "phases": {
         "index_field": "protocolSection.designModule.phases",
         "object_type": "simple_array",
-        "table_name": "phases",
-        "bridge_table_name": "study_phases",
-        "field_name": "phase",
-        "transformer_method": "transform_study_phases",
+        "field_name": "phase"
     },
 
     "ipd_info_types": {
         "index_field": "protocolSection.ipdSharingStatementModule.infoTypes",
         "object_type": "simple_array",
-        "table_name": "ipd_info_types",
-        "bridge_table_name": "study_ipd_info_types",
-        "field_name": "info_type",
-        "transformer_method": "transform_ipd_info_types",
+        "field_name": "info_type"
     },
     "secondary_id_infos": {
         "index_field": "protocolSection.identificationModule.secondaryIdInfos",
         "object_type": "array_of_dicts",
-        "table_name": "secondary_ids",
-        "bridge_table_name": "study_secondary_ids",
         "fields": [
             ("id", "id"),
             ("object_type", "object_type"),
             ("domain", "domain"),
             ("link", "link"),
-        ],
-        "transformer_method": "transform_id_infos",
+        ]
     },
     "nct_id_aliases": {
         "index_field": "protocolSection.identificationModule.nctIdAliases",
         "object_type": "simple_array",
-        "table_name": "nct_aliases",
-        "bridge_table_name": "study_nct_aliases",
-        "field_name": "alias_nct_id",
-        "transformer_method": "transform_nct_id_aliases",
+        "field_name": "alias_nct_id"
     },
-    # ===== DERIVED SECTION (MeSH) =====
-    # CONDITION MESH TERMS
-    "condition_mesh_terms": {
-        "index_field": "derivedSection.conditionBrowseModule.meshes",
-        "object_type": "array_of_dicts",
-        "fields": [("id", "id"), ("term", "term")],
-        "table_name": "condition_mesh_terms",
-        "bridge_table_name": "study_conditions_mesh",
-        "is_primary": True,
-        "transformer_method": "transform_condition_mesh",
-    },
-    "condition_mesh_ancestors": {
-        "index_field": "derivedSection.conditionBrowseModule.ancestors",
-        "object_type": "array_of_dicts",
-        "fields": [("id", "id"), ("term", "term")],
-        "table_name": "condition_mesh_terms",
-        "bridge_table_name": "study_conditions_mesh",
-        "is_primary": False,
-        "transformer_method": "transform_condition_mesh",
-    },
-    "intervention_mesh_terms": {
-        "index_field": "derivedSection.interventionBrowseModule.meshes",
-        "object_type": "array_of_dicts",
-        "fields": [("id", "id"), ("term", "term")],
-        "table_name": "intervention_mesh_terms",
-        "bridge_table_name": "study_interventions_mesh",
-        "is_primary": True,
-        "transformer_method": "transform_intervention_mesh",
-    },
-    "intervention_mesh_ancestors": {
-        "index_field": "derivedSection.interventionBrowseModule.ancestors",
-        "object_type": "array_of_dicts",
-        "fields": [("id", "id"), ("term", "term")],
-        "table_name": "intervention_mesh_terms",
-        "bridge_table_name": "study_interventions_mesh",
-        "is_primary": False,
-        "transformer_method": "transform_intervention_mesh",
-    },
-    "large_documents": {
-        "index_field": "documentSection.largeDocumentModule.largeDocs",
-        "object_type": "array_of_dicts",
-        "fields": [
-            ("typeAbbrev", "typeAbbrev"),
-            ("hasProtocol", "hasProtocol"),
-            ("hasSap", "hasSap"),
-            ("hasIcf", "hasIcf"),
-            ("label", "label"),
-            ("date", "date"),
-            ("uploadDate", "uploadDate"),
-            ("filename", "filename"),
-            ("size", "size"),
-        ],
-        "table_name": "study_documents",
-        "transformer_method": "transform_large_documents",
-    },
-    "unposted_events": {
-        "index_field": "annotationSection.annotationModule.unpostedAnnotation.unpostedEvents",
-        "object_type": "array_of_dicts",
-        "fields": [
-            ("object_type", "object_type"),
-            ("date", "date"),
-            ("dateUnknown", "dateUnknown"),
-        ],
-        "table_name": "unposted_events",
-        "bridge_table_name": "study_unposted_events",
-        "transformer_method": "transform_unposted_events",
-    },
-    "violation_events": {
-        "index_field": "annotationSection.annotationModule.violationAnnotation.violationEvents",
-        "object_type": "array_of_dicts",
-        "fields": [
-            ("object_type", "object_type"),
-            ("description", "description"),
-            ("creationDate", "creationDate"),
-            ("issuedDate", "issuedDate"),
-            ("releaseDate", "releaseDate"),
-            ("postedDate", "postedDate"),
-        ],
-        "table_name": "violation_events",
-        "bridge_table_name": "study_violation_events",
-        "transformer_method": "transform_violation_events",
-    },
-    "removed_countries": {
-        "index_field": "derivedSection.miscInfoModule.removedCountries",
-        "object_type": "simple_array",
-        "table_name": "countries",
-        "bridge_table_name": "study_removed_countries",
-        "field_name": "country",
-        "transformer_method": "transform_removed_countries",
-    },
-    "sub_infos": {
-        "index_field": "derivedSection.miscInfoModule.submissionTracking.submissionInfos",
-        "object_type": "array_of_dicts",
-        "fields": [
-            ("releaseDate", "releaseDate"),
-            ("unreleaseDate", "unreleaseDate"),
-            ("unreleaseDateUnknown", "unreleaseDateUnknown"),
-            ("resetDate", "resetDate"),
-            ("mcpReleaseN", "mcpReleaseN"),
-        ],
-        "table_name": "sub_tracking",
-        "bridge_table_name": "study_sub_tracking",
-        "transformer_method": "transform_sub_infos",
-    },
+
+
 
 }
