@@ -10,6 +10,26 @@ log = logging.getLogger("airflow.task")
 
 
 def transform_adverse_events(self, study_key: str, study_data: pd.Series) -> Tuple:
+    """
+        Transform adverse events data from nested JSON into normalised tables.
+
+        Extracts adverse event information from a clinical trial study record and
+        normalises it into six related tables: adverse event metadata, event groups
+        (arms/cohorts), serious events, serious event statistics, other events,
+        and other event statistics.
+
+        Args:
+            study_key: Surrogate key identifying the parent study record.
+            study_data: Series containing the flattened study record with nested
+                adverse events data accessible via the configured index field.
+
+        Returns:
+            A tuple of six lists, each containing dictionaries of transformed data
+
+        Note:
+            Returns empty lists for all outputs if adverse events data is missing
+            or malformed.
+        """
 
     adverse_event = []
     event_groups = []

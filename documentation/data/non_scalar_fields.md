@@ -1,12 +1,31 @@
 
 ### Source: https://clinicaltrials.gov/data-api/about-api/study-data-structure
 
+
+## identificationModule
+
+- **Index Field:** `protocolSection.identificationModule`
+- **Description**: Study Identification
+
+### Non-scalar fields
+##### `nctIdAliases`
+- **Definition**: Identifier(s) that are considered "Obsolete" or "Duplicate".
+- **Data Type**: nct[]
+
+
+##### `SecondaryIdInfo`
+- **Definition**: Name of the sponsoring entity or individual
+- **Data Type**: SecondaryIdInfo[]
+- **Fields**: [id, type, domain, link]
+
+
+---
+
 ## SponsorCollaboratorsModule
 
 ### sponsors
 
-**Index Field(s):** 
-- `protocolSection.sponsorCollaboratorsModule.leadSponsor`
+**Index Field(s):** `protocolSection.sponsorCollaboratorsModule`
 - `protocolSection.sponsorCollaboratorsModule.collaborators[]`
 
 **NOTE**: *sponsor name and class are scalar values and MUST be extracted directly*

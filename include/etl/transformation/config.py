@@ -170,12 +170,12 @@ NON_SCALAR_FIELDS = {
     # participantFlowModule
     "flow_groups": {
         "index_field": "resultsSection.participantFlowModule.groups",
-        "type": "array_of_dicts",
+        
         "fields": ["id", "title", "description"],
     },
     "flow_periods": {
         "index_field": "resultsSection.participantFlowModule.periods",
-        "type": "array_of_dicts",
+        
         "fields": ["title"],
         "non-scalar_fields": {
             "milestones": ["type", "comment", "achievements"],
@@ -185,7 +185,7 @@ NON_SCALAR_FIELDS = {
     # outcomeMeasuresModule
     "outcome_measures": {
         "index_field": "resultsSection.outcomeMeasuresModule.outcomeMeasures",
-        "type": "array_of_dicts",
+        
         "fields": [
             "type",
             "title",
@@ -210,13 +210,6 @@ NON_SCALAR_FIELDS = {
     # adverseEventsModule
     "adverse_events": {
         "index_field": "resultsSection.adverseEventsModule",
-        "type": "array_of_dicts",
-        "fields": [
-            "frequencyThreshold",
-            "timeFrame",
-            "description",
-            "allCauseMortalityComment",
-        ],
         "non-scalar_fields": {
             "eventGroups": [
                 "id",
@@ -247,9 +240,10 @@ NON_SCALAR_FIELDS = {
         },
     },
     # annotationModule
-    "violation_events": {
+    "annotations": {
         "index_field": "annotationSection.annotationModule.violationAnnotation.violationEvents",
-        "fields": [
+        "non-scalar_fields": {
+            "violations": [
             "type",
             "description",
             "creationDate",
@@ -257,6 +251,7 @@ NON_SCALAR_FIELDS = {
             "releaseDate",
             "postedDate",
         ],
+        }
     },
     # conditionBrowseModule
     "conditions_browse": {
