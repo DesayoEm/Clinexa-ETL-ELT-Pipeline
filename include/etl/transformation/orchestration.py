@@ -3,7 +3,10 @@ from typing import List, Dict
 from collections import defaultdict
 from airflow.utils.context import Context
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-from include.etl.transformation.core_transformation.study_transformation import process_study_file, post_process_tables
+from include.etl.transformation.core_transformation.study_transformation import (
+    process_study_file,
+    post_process_tables,
+)
 from include.etl.transformation.custom_data_classes import StudyResult
 
 
@@ -24,12 +27,13 @@ class Orchestrator:
         log: Airflow task logger for structured logging.
         s3: S3Hook instance for reading source files and writing checkpoints.
     """
+
     def __init__(self, context: Context, s3_dest_hook: S3Hook = None):
         self.context = context
         self.execution_date = context.get("ds")
         self.log = logging.getLogger("airflow.task")
         self.s3 = s3_dest_hook or S3Hook(aws_conn_id="aws_airflow")
-        
+
     def mark_checkpoint(self, index, file):
         """
         Persist progress marker to enable resumption after failure.
@@ -74,7 +78,7 @@ class Orchestrator:
 
         return merged
 
-    def transform_studies_batch(self, loc:str):
+    def transform_studies_batch(self, loc: str):
         """
         Process all raw study files for the current execution date.
 
@@ -89,7 +93,7 @@ class Orchestrator:
             Exception: Re-raises any processing error after checkpointing,
                 preserving the original exception for Airflow visibility.
         """
-        files = "" #s3 loc
+        files = ""  # s3 loc
         self.load_checkpoint()
         for index, file_path in enumerate(files):
 
@@ -104,15 +108,3 @@ class Orchestrator:
                 self.mark_checkpoint(index, file_path)
                 self.log.exception(f"File failed: Exception: {str(e)}")
                 raise
-
-
-
- 
-        
-        
-
-        
-        
-                
-    
-    

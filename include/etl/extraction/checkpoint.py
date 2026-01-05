@@ -1,4 +1,3 @@
-
 import logging
 from typing import Dict
 import json
@@ -172,4 +171,3 @@ class StateHandler:
         self.log.info(
             f"Checkpoint saved - Key: {checkpoint_key}, Page: {last_saved_page}, Previous token: {previous_token}, Current token: {last_saved_token}"
         )
-

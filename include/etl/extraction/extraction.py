@@ -14,6 +14,7 @@ from include.monitoring.exceptions import RequestExhaustionError
 from config.env_config import config
 from checkpoint import StateHandler
 
+
 class Extractor:
     """
     Orchestrates paginated API extraction of clinical trials data with fault tolerance.

@@ -1,6 +1,5 @@
-from dataclasses import dataclass,asdict
+from dataclasses import dataclass, asdict
 from typing import List, Dict
-
 
 
 @dataclass
@@ -12,7 +11,8 @@ class StudyResult:
     clarity when aggregating batch results. Each attribute holds a list of dicts representing records
     for that entity table.
     """
-    study: List #single study
+
+    study: List  # single study
     sponsors: List
     study_sponsors: List
     collaborators: List

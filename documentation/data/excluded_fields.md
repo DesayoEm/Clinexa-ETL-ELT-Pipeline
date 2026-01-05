@@ -1,10 +1,7 @@
-### Source: https://clinicaltrials.gov/data-api/about-api/study-data-structure
 
+# EXCLUDED FIELDS
 
-### EXCLUDED FIELDS
-
-## Identification
-
+## identificationModule
 
 ### org_study_type
 - **Index Field:** `protocolSection.identificationModule.orgStudyIdInfo.type`
@@ -19,8 +16,6 @@
 - **DataType**: Enum(OrgStudyIdType)
 - **Reason**: Missing from most rows and has no analytical value
 
-
-## Organisation
 
 ### org_name
 - **Index Field:** `protocolSection.identificationModule.organization.fullName`
@@ -46,7 +41,10 @@
 
 - **Reason**: Information provided in `protocolSection.sponsorCollaboratorsModule`
 
-## Design
+---
+
+## designModule
+
 ### design_masking_desc
 - **Index Field:** `protocolSection.designModule.designInfo.maskingInfo.maskingDescription`
 - **Definition**: Information about other parties who may be masked in the clinical trial, if any.
@@ -54,8 +52,6 @@
 - **Limit**: 1000 characters
 - **Reason**: Missing from most rows and has no analytical value
 
-
-## Expanded access
 
 ### exp_acc_type_individual
 - **Index Field:** `protocolSection.designModule.expandedAccessTypes.individual`
@@ -83,7 +79,10 @@
 - **DataType**: boolean (Yes/No)
 - **Reason**: Not present in raw API payload; UI-only construct
 
-## Eligibility
+---
+
+
+## eligibilityModule
 
 ### gender_based
 - **Index Field:** `protocolSection.eligibilityModule.genderBased`
@@ -110,8 +109,9 @@
 - * OLDER_ADULT - Older Adult
 - **Reason**: Data is presented as an array and information could be inferred from `protocolSection.eligibilityModule.maximumAge` and `protocolSection.eligibilityModule.minimumAge`
 
+---
 
-## status
+## statusModule
 ### delayed_posting
 - **Index Field:** `protocolSection.statusModule.delayedPosting`
 - **Definition**:Post Prior to U.S. FDA Approval or Clearance
@@ -128,43 +128,7 @@ It is the responsibility of the sponsor or investigator to ensure that the study
 - **DataType**: NormalizedDate  
 - **Reason**: No analytical value
 
-
-
-## Large documents
-
-### large_doc_no_sap
-- **Index Field:** `documentSection.largeDocumentModule.noSap`
-- **Definition**: Indication that No Statistical Analysis Plan (SAP) exists for this study.
-- **DataType**: Boolean (Yes/No)
-- **Reason**: No analytical value
-
-## Miscellaneous
-
-### unposted_responsible_party
-- **Index Field:**  `annotationSection.annotationModule.unpostedAnnotation.unpostedResponsibleParty`
-- **Definition**: Responsible Party for Unposted Events.
-- **DataType**: text
-- **Reason**: No analytical value
-
-
-### sub_tracking_first_mcp_date
-- **Index Field:** `derivedSection.miscInfoModule.submissionTracking.firstMcpInfo.postDateStruct.date`
-- **Definition**: Date of first MCP posted date
-- **DataType**: NormalizedDate
-- **Reason**: Field not clearly described. can't determine analytical value
-
-
-### sub_tracking_first_mcp_type
-**Index Field:** derivedSection.miscInfoModule.submissionTracking.firstMcpInfo.postDateStruct.type
-
-**Definition**: Date type for first MCP posted date
-**DataType**: Enum(DateType) 
-**Source Values**:
-
-* ACTUAL - Actual
-* ESTIMATED - Estimated
-
-- **Reason**: Field not clearly described. can't determine analytical value
+---
 
 
 ## contactsLocationsModule
@@ -177,7 +141,7 @@ It is the responsibility of the sponsor or investigator to ensure that the study
 
 ----
 
-## References
+## referencesModule
 
 ### references
 -**Index Field:** `protocolSection.referencesModule.references`
@@ -200,13 +164,13 @@ It is the responsibility of the sponsor or investigator to ensure that the study
 
 ---
 
-### baseline_measures_module
+### baselineMeasuresModule
 - **Index Field**: `resultsSection.baselineMeasuresModule`
 - **Description**: A table of demographic and baseline measures and data collected by arm or comparison group and for the entire population of participants in the clinical study.
 - **Reason for Exclusion**: Contains metadata about what baseline demographics were collected (age, gender, etc.) but not the actual measured values. 
   No analytical value. Documentation/compliance data
 
-
+---
 
 ### annotationModule
 - **Index Field:** `annotationSection.annotationModule`
@@ -226,13 +190,6 @@ The annotation module tracks ClinicalTrials.gov's internal submission and qualit
   ]
 }
 ```
-
-This indicates results were submitted Sept 20, then pulled back Oct 14 for revision.
-
-**Patient Matching Impact:** None - patients don't query by submission workflow status
-
-**R&D Impact:** NONE - whether results were submitted/reset doesn't predict trial success or provide clinical insights. 
-        The actual posted results (outcome_measures) are what matter.
 ---
 
 ### documentSection / largeDocModule

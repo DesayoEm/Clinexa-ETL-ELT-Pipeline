@@ -1,19 +1,19 @@
-from typing import Dict, Tuple
+from typing import Tuple
 import logging
 import pandas as pd
 import numpy as np
-from include.etl.transformation.config import NESTED_FIELDS
+from include.etl.transformation.config import NON_SCALAR_FIELDS
 from include.etl.transformation.utils import generate_key
 
 log = logging.getLogger("airflow.task")
 
 
-def transform_conditions_mesh(nct_id: str, study_key: str, study_data: pd.Series) -> Tuple:
+def transform_conditions_browse(study_key: str, study_data: pd.Series) -> Tuple:
     conditions_mesh = []
     study_conditions_mesh = []
 
-    conditions_ancestors = []
-    study_conditions_ancestors = []
+    conditions_mesh_ancestors = []
+    study_conditions_mesh_ancestors = []
 
     conditions_browse_leaves = []
     study_conditions_browse_leaves = []
@@ -21,28 +21,113 @@ def transform_conditions_mesh(nct_id: str, study_key: str, study_data: pd.Series
     conditions_browse_branches = []
     study_conditions_browse_branches = []
 
-    conditions_browse_index = NESTED_FIELDS["conditions_browse"]["index_field"]
+    conditions_browse_index = NON_SCALAR_FIELDS["conditions_browse"]["index_field"]
     conditions_browse_data = study_data.get(conditions_browse_index)
 
     if isinstance(conditions_browse_data, dict) and conditions_browse_data:
         meshes = conditions_browse_data.get("meshes")
-        for mesh in meshes:
-            pass
+        if isinstance(meshes, (list, np.ndarray)) and len(meshes) > 0:
+            for mesh in meshes:
+                mesh_id = mesh.get("id")
+                mesh_terms = mesh.get("terms")
 
-        ancestors = conditions_browse_data.get("ancestors")
-        for ancestor in ancestors:
-            pass
+                if isinstance(mesh_terms, str) and mesh_terms:
+                    terms = mesh_terms.split(",")
+                    for term in terms:
+                        term = term.strip()
+                        mesh_key = generate_key(study_key, mesh_id, term)
+                        conditions_mesh.append(
+                            {
+                                "mesh_key": mesh_key,
+                                "study_key": study_key,
+                                "mesh_id": mesh_id,
+                                "mesh_term": term,
+                            }
+                        )
 
-        browse_leaves = conditions_browse_data.get("browseLeaves")
-        for leaves in browse_leaves:
-            pass
+                        study_conditions_mesh.append(
+                            {"mesh_key": mesh_key, "study_key": study_key}
+                        )
 
-        browse_branches = conditions_browse_data.get("browseBranches")
-        for branch in browse_branches:
-            pass
+        mesh_ancestors_list = conditions_browse_data.get("ancestors")
+        for mesh_ancestor in mesh_ancestors_list:
+            ancestor_id = mesh_ancestor.get("id")
+            ancestor_terms = mesh_ancestor.get("terms")
 
+            if isinstance(ancestor_terms, str) and ancestor_terms:
+                terms = ancestor_terms.split(",")
+                for term in terms:
+                    term = term.strip()
+                    ancestor_key = generate_key(study_key, ancestor_id, term)
+                    conditions_mesh_ancestors.append(
+                        {
+                            "mesh_ancestor_key": ancestor_key,
+                            "study_key": study_key,
+                            "mesh_ancestor_id": ancestor_id,
+                            "mesh_ancestor_term": term,
+                        }
+                    )
+
+                    study_conditions_mesh_ancestors.append(
+                        {"mesh_ancestor_key": ancestor_key, "study_key": study_key}
+                    )
+
+        mesh_browse_leaves = conditions_browse_data.get("browseLeaves")
+        if (
+            isinstance(mesh_browse_leaves, (list, np.ndarray))
+            and len(mesh_browse_leaves) > 0
+        ):
+            for browse_leaf in mesh_browse_leaves:
+                leaf_id = browse_leaf.get("id")
+                leaf_key = generate_key(study_key, leaf_id)
+
+                conditions_browse_leaves.append(
+                    {
+                        "leaf_key": leaf_key,
+                        "study_key": study_key,
+                        "name": browse_leaf.get("name"),
+                        "as_found": browse_leaf.get("asFound"),
+                        "relevance": browse_leaf.get("relevance"),
+                    }
+                )
+
+                study_conditions_browse_leaves.append(
+                    {"mesh_browse_leaf_key": leaf_key, "study_key": study_key}
+                )
+
+        mesh_browse_branches = conditions_browse_data.get("browseBranches")
+        if (
+            isinstance(mesh_browse_branches, (list, np.ndarray))
+            and len(mesh_browse_branches) > 0
+        ):
+            for browse_branch in mesh_browse_branches:
+                branch_id = browse_branch.get("id")
+                branch_key = generate_key(study_key, branch_id)
+
+                conditions_browse_branches.append(
+                    {
+                        "branch_key": branch_key,
+                        "study_key": study_key,
+                        "name": browse_branch.get("name"),
+                        "as_found": browse_branch.get("asFound"),
+                        "relevance": browse_branch.get("relevance"),
+                    }
+                )
+
+                study_conditions_browse_branches.append(
+                    {"mesh_browse_branch_key": branch_key, "study_key": study_key}
+                )
 
     # else:
     #     log.warning(f"No conditions_mesh found for study {study_key}, page - NCT ID {nct_id}")
 
-    return conditions_mesh, study_conditions_mesh
+    return (
+        conditions_mesh,
+        study_conditions_mesh,
+        conditions_mesh_ancestors,
+        study_conditions_mesh_ancestors,
+        conditions_browse_leaves,
+        study_conditions_browse_leaves,
+        conditions_browse_branches,
+        study_conditions_browse_branches,
+    )

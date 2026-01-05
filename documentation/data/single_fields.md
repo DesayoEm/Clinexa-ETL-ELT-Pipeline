@@ -1,9 +1,6 @@
 
 ### Source: https://clinicaltrials.gov/data-api/about-api/study-data-structure
 
-
-### SINGLE FIELDS 
-
 ## Identification
 
 ### nct_id

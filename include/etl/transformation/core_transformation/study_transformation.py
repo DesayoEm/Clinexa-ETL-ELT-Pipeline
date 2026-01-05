@@ -1,4 +1,3 @@
-
 from typing import List, Dict
 from collections import defaultdict
 import logging
@@ -8,15 +7,37 @@ from include.etl.transformation.config import SINGLE_FIELDS
 from include.etl.transformation.utils import generate_key
 from include.etl.transformation.custom_data_classes import StudyResult
 
-from include.etl.transformation.core_transformation.modules.study_main import transform_study_fields
-from include.etl.transformation.core_transformation.modules.sponsor_collaborator import transform_sponsors, transform_collaborators
-from include.etl.transformation.core_transformation.modules.conditions import transform_conditions, transform_keywords
-from include.etl.transformation.core_transformation.modules.arms_intervention import transform_arm_groups, transform_interventions
-from include.etl.transformation.core_transformation.modules.contacts_location import transform_locations, transform_central_contacts
-from include.etl.transformation.core_transformation.modules.references import transform_references, transform_links, transform_ipds
-from include.etl.transformation.core_transformation.modules.participant_flow import transform_flow_events, transform_flow_groups
+from include.etl.transformation.core_transformation.modules.study_main import (
+    transform_study_fields,
+)
+from include.etl.transformation.core_transformation.modules.sponsor_collaborator import (
+    transform_sponsors,
+    transform_collaborators,
+)
+from include.etl.transformation.core_transformation.modules.conditions import (
+    transform_conditions,
+    transform_keywords,
+)
+from include.etl.transformation.core_transformation.modules.arms_intervention import (
+    transform_arm_groups,
+    transform_interventions,
+)
+from include.etl.transformation.core_transformation.modules.contacts_location import (
+    transform_locations,
+    transform_central_contacts,
+)
+from include.etl.transformation.core_transformation.modules.references import (
+    transform_references,
+    transform_links,
+    transform_ipds,
+)
+from include.etl.transformation.core_transformation.modules.participant_flow import (
+    transform_flow_events,
+    transform_flow_groups,
+)
 
 log = logging.getLogger("airflow.task")
+
 
 def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
     """
@@ -78,7 +99,8 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
     df_keywords = df_keywords.drop_duplicates(subset=["keyword_key"])
     df_interventions = df_interventions.drop_duplicates(subset=["intervention_key"])
     df_arm_group_interventions = df_arm_group_interventions.drop_duplicates(
-        subset=["study_arm_key", "study_key", "arm_intervention_name"])
+        subset=["study_arm_key", "study_key", "arm_intervention_name"]
+    )
     df_locations = df_locations.drop_duplicates(subset=["location_key"])
     df_central_contacts = df_central_contacts.drop_duplicates(subset=["contact_key"])
 
@@ -90,12 +112,9 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
 
     # Aggregate to mitigate flow duplicates. check docs/data_quality_issues.md for details
     df_flow_period_events = df_flow_period_events.groupby(
-        ['study_key', 'period_title', 'event_class', 'event_type', 'group_id'],
-        as_index=False
-    ).agg({
-        'num_subjects': 'sum',
-        'period_key': 'first'
-    })
+        ["study_key", "period_title", "event_class", "event_type", "group_id"],
+        as_index=False,
+    ).agg({"num_subjects": "sum", "period_key": "first"})
 
     return [
         df_studies,
@@ -121,6 +140,7 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
         df_flow_period_events,
     ]
 
+
 def process_study_file(data_loc: str) -> List[StudyResult]:
     """
     Process a parquet file containing raw study data from ClinicalTrials.gov API.
@@ -145,7 +165,7 @@ def process_study_file(data_loc: str) -> List[StudyResult]:
     df_studies = pd.json_normalize(df_studies["studies"])
 
     for idx, study in df_studies.iterrows():
-        nct_index = SINGLE_FIELDS['nct_id']
+        nct_index = SINGLE_FIELDS["nct_id"]
         nct_id = study.get(nct_index)
 
         if not nct_id:
@@ -160,7 +180,6 @@ def process_study_file(data_loc: str) -> List[StudyResult]:
             raise
 
     return batch_results
-
 
 
 def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
@@ -185,11 +204,9 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
 
     result = defaultdict(list)
 
-    result["study"].append(
-        transform_study_fields(study_key, study)
-    )
+    result["study"].append(transform_study_fields(study_key, study))
 
-    #sponsorCollaboratorsModule
+    # sponsorCollaboratorsModule
     sponsors, study_sponsors = transform_sponsors(nct_id, study_key, study)
     result["sponsors"].extend(sponsors)
     result["study_sponsors"].extend(study_sponsors)
@@ -198,7 +215,7 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
     result["collaborators"].extend(collaborators)
     result["study_collaborators"].extend(study_collaborators)
 
-    #conditionsModule
+    # conditionsModule
     conditions, study_conditions = transform_conditions(nct_id, study_key, study)
     result["conditions"].extend(conditions)
     result["study_conditions"].extend(study_conditions)
@@ -216,7 +233,9 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
     result["study_interventions"].extend(study_interventions)
 
     # contactsLocationsModule
-    central_contacts, study_central_contacts = transform_central_contacts(study_key, study)
+    central_contacts, study_central_contacts = transform_central_contacts(
+        study_key, study
+    )
     result["central_contacts"].extend(central_contacts)
     result["study_central_contacts"].extend(study_central_contacts)
 
@@ -224,7 +243,7 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
     result["locations"].extend(locations)
     result["study_locations"].extend(study_locations)
 
-    #referencesModule
+    # referencesModule
     references = transform_references(study_key, study)
     result["references"].extend(references)
 
@@ -264,15 +283,3 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
         flow_groups=result["flow_groups"],
         flow_period_events=result["flow_period_events"],
     )
-
-
-
-
-
-
-
-
-
-
-
-
