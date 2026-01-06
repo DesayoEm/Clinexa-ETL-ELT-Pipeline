@@ -1,4 +1,4 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, fields
 from typing import List, Dict
 
 
@@ -13,6 +13,8 @@ class StudyResult:
     """
 
     study: List  # single study
+    secondary_ids: List
+    nct_aliases: List
     sponsors: List
     study_sponsors: List
     collaborators: List
@@ -36,3 +38,8 @@ class StudyResult:
 
     def tables(self) -> Dict[str, List[Dict]]:
         return asdict(self)
+
+    @classmethod
+    def expected_tables(cls) -> List[str]:
+        """Canonical list of expected output tables for the StudyResult schema."""
+        return [f.name for f in fields(cls)]

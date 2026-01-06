@@ -9,7 +9,7 @@ from include.etl.transformation.utils import generate_key
 log = logging.getLogger("airflow.task")
 
 
-def transform_adverse_events(self, study_key: str, study_data: pd.Series) -> Tuple:
+def transform_adverse_events(study_key: str, study_data: pd.Series) -> Tuple:
     """
         Transform adverse events data from nested JSON into normalised tables.
 
@@ -61,7 +61,7 @@ def transform_adverse_events(self, study_key: str, study_data: pd.Series) -> Tup
         if isinstance(event_groups, (list, np.ndarray)) and len(event_groups) > 0:
             for event_group in event_groups:
                 group_id = event_group.get("id")
-                event_group_key = self.generate_key(
+                event_group_key = generate_key(
                     study_key, adverse_event_key, group_id
                 )
 
@@ -90,7 +90,7 @@ def transform_adverse_events(self, study_key: str, study_data: pd.Series) -> Tup
         ):
             for serious_event in serious_events_list:
                 term = serious_event.get("term")
-                serious_event_key = self.generate_key(
+                serious_event_key = generate_key(
                     study_key, adverse_event_key, term
                 )
 
@@ -113,7 +113,7 @@ def transform_adverse_events(self, study_key: str, study_data: pd.Series) -> Tup
                 ):
                     for serious_event_stat in serious_event_stats_list:
                         group_id = serious_event_stat.get("groupId")
-                        event_stat_key = self.generate_key(
+                        event_stat_key = generate_key(
                             study_key, adverse_event_key, serious_event_key, group_id
                         )
 
@@ -137,7 +137,7 @@ def transform_adverse_events(self, study_key: str, study_data: pd.Series) -> Tup
         ):
             for other_event in other_events_list:
                 term = other_event.get("term")
-                other_event_key = self.generate_key(study_key, adverse_event_key, term)
+                other_event_key = generate_key(study_key, adverse_event_key, term)
 
                 serious_events.append(
                     {
@@ -160,7 +160,7 @@ def transform_adverse_events(self, study_key: str, study_data: pd.Series) -> Tup
                     for other_event_stat in other_event_stats_list:
 
                         group_id = other_event_stat.get("groupId")
-                        event_stat_key = self.generate_key(
+                        event_stat_key = generate_key(
                             study_key, adverse_event_key, other_event_key, group_id
                         )
 

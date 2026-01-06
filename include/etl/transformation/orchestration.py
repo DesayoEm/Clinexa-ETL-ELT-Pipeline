@@ -7,13 +7,12 @@ from include.etl.transformation.core_transformation.study_transformation import 
     process_study_file,
     post_process_tables,
 )
-from include.etl.transformation.custom_data_classes import StudyResult
+from include.etl.transformation.models import StudyResult
+EXPECTED_TABLES = StudyResult.expected_tables()
 
 
 class Orchestrator:
     """
-    Coordinates batch transformation of clinical trials data files.
-
     Manages the end-to-end transformation workflow: iterating through raw
     parquet files in S3, transforming each into normalised  records,
     merging results, and handling failures with checkpoint recovery.
@@ -76,7 +75,14 @@ class Orchestrator:
             for table, rows in study_result.tables().items():
                 merged[table].extend(rows)
 
+
+        missing = set(EXPECTED_TABLES) - merged.keys()
+
+        if missing:
+            raise ValueError(f"Missing tables: {missing}")
+
         return merged
+
 
     def transform_studies_batch(self, loc: str):
         """
@@ -100,7 +106,9 @@ class Orchestrator:
             try:
                 batch_result = process_study_file(file_path)
                 merged_batch_results = self.merge_batch_results(batch_result)
-                post_process_tables(merged_batch_results)
+                dfs = post_process_tables(merged_batch_results)
+
+                return dfs
 
                 # load
 

@@ -8,7 +8,7 @@ from include.etl.transformation.utils import generate_key
 log = logging.getLogger("airflow.task")
 
 
-def extract_identification_module(study_key: str, study_data: pd.Series) -> Tuple:
+def transform_identification_module(study_key: str, study_data: pd.Series) -> Tuple:
 
     secondary_ids = []
     nct_aliases = []
