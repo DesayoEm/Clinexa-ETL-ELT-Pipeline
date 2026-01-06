@@ -15,8 +15,7 @@ from include.etl.transformation.core_transformation.modules.identification impor
     transform_identification_module,
 )
 from include.etl.transformation.core_transformation.modules.sponsor_collaborator import (
-    transform_sponsors,
-    transform_collaborators,
+    transform_sponsor_and_collaborators,
 )
 from include.etl.transformation.core_transformation.modules.conditions import (
     transform_conditions,
@@ -41,7 +40,6 @@ from include.etl.transformation.core_transformation.modules.participant_flow imp
 )
 
 log = logging.getLogger("airflow.task")
-
 
 
 def process_study_file(file_loc: str) -> List[StudyResult]:
@@ -106,21 +104,21 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
     study_key = generate_key(nct_id)
     result = defaultdict(list)
 
+    # scalar fields
     study_fields = transform_scalar_fields(study_key, study)
-    result["study"].append(study_fields)
-    
+    result["studies"].append(study_fields)
+
     # identificationModule
     secondary_ids, nct_aliases = transform_identification_module(study_key, study)
     result["secondary_ids"].extend(secondary_ids)
     result["nct_aliases"].extend(nct_aliases)
 
-
     # sponsorCollaboratorsModule
-    sponsors, study_sponsors = transform_sponsors(nct_id, study_key, study)
-    result["sponsors"].extend(sponsors)
-    result["study_sponsors"].extend(study_sponsors)
-
-    collaborators, study_collaborators = transform_collaborators(study_key, study)
+    sponsor, study_sponsor, collaborators, study_collaborators = (
+        transform_sponsor_and_collaborators(nct_id, study_key, study)
+    )
+    result["sponsors"].extend(sponsor)
+    result["study_sponsors"].extend(study_sponsor)
     result["collaborators"].extend(collaborators)
     result["study_collaborators"].extend(study_collaborators)
 
@@ -170,7 +168,7 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
     result["flow_period_events"].extend(flow_period_events)
 
     return StudyResult(
-        study=result["study"],
+        studies=result["studies"],
         secondary_ids=result["secondary_ids"],
         nct_aliases=result["nct_aliases"],
         sponsors=result["sponsors"],
@@ -215,12 +213,11 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
          links, ipds, flow_groups, flow_period_events]
     """
 
-    df_studies = pd.DataFrame(results["study"])
+    df_studies = pd.DataFrame(results["studies"])
 
     # identificationModule
     df_secondary_ids = pd.DataFrame(results["secondary_ids"])
     df_nct_aliases = pd.DataFrame(results["nct_aliases"])
-
 
     # sponsorCollaboratorsModule
     df_sponsors = pd.DataFrame(results["sponsors"])
@@ -303,4 +300,3 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
         df_flow_groups,
         df_flow_period_events,
     ]
-

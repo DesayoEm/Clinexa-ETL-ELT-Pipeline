@@ -21,7 +21,9 @@ def transform_interventions_browse(study_key: str, study_data: pd.Series) -> Tup
     interventions_browse_branches = []
     study_interventions_browse_branches = []
 
-    interventions_browse_index = NON_SCALAR_FIELDS["interventions_browse"]["index_field"]
+    interventions_browse_index = NON_SCALAR_FIELDS["interventions_browse"][
+        "index_field"
+    ]
     interventions_browse_data = study_data.get(interventions_browse_index)
 
     if isinstance(interventions_browse_data, dict) and interventions_browse_data:

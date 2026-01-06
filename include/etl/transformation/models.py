@@ -12,7 +12,7 @@ class StudyResult:
     for that entity table.
     """
 
-    study: List  # single study
+    studies: List  # single study
     secondary_ids: List
     nct_aliases: List
     sponsors: List

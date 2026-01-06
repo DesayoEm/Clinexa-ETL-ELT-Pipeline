@@ -8,6 +8,7 @@ from include.etl.transformation.core_transformation.study_transformation import 
     post_process_tables,
 )
 from include.etl.transformation.models import StudyResult
+
 EXPECTED_TABLES = StudyResult.expected_tables()
 
 
@@ -75,14 +76,12 @@ class Orchestrator:
             for table, rows in study_result.tables().items():
                 merged[table].extend(rows)
 
-
         missing = set(EXPECTED_TABLES) - merged.keys()
 
         if missing:
             raise ValueError(f"Missing tables: {missing}")
 
         return merged
-
 
     def transform_studies_batch(self, loc: str):
         """

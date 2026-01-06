@@ -8,7 +8,9 @@ from include.etl.transformation.utils import generate_key
 log = logging.getLogger("airflow.task")
 
 
-def transform_sponsors(nct_id: str, study_key: str, study_data: pd.Series) -> Tuple:
+def transform_sponsor_and_collaborators(
+    nct_id: str, study_key: str, study_data: pd.Series
+) -> Tuple:
     """
     Extract sponsors from a single study.
     Args:
@@ -19,19 +21,25 @@ def transform_sponsors(nct_id: str, study_key: str, study_data: pd.Series) -> Tu
         Tuple of (sponsors_list, study_sponsors_list)
     """
 
-    sponsors = []
-    study_sponsors = []
+    sponsor = []
+    study_sponsor = []
+    collaborators = []
+    study_collaborators = []
 
-    # Extract lead sponsor
-    lead_sponsor_index = NON_SCALAR_FIELDS["sponsor"]["index_field"]
+    sponsor_collaborator_index = NON_SCALAR_FIELDS["sponsor_collaborators"][
+        "index_field"
+    ]
 
-    # sponsor name and class are scalar values and MUST be extracted directly
-    lead_sponsor_name = study_data.get(f"{lead_sponsor_index}.name")
-    lead_sponsor_class = study_data.get(f"{lead_sponsor_index}.class")
+    ## sponsor name and class are scalar values and MUST be transformed as so
+    lead_sponsor_name = study_data.get(f"{sponsor_collaborator_index}.leadSponsor.name")
+    lead_sponsor_class = study_data.get(
+        f"{sponsor_collaborator_index}.leadSponsor.class"
+    )
 
     if pd.notna(lead_sponsor_name) and pd.notna(lead_sponsor_class):
+
         sponsor_key = generate_key(lead_sponsor_name, lead_sponsor_class)
-        sponsors.append(
+        sponsor.append(
             {
                 "sponsor_key": sponsor_key,
                 "name": lead_sponsor_name,
@@ -39,24 +47,10 @@ def transform_sponsors(nct_id: str, study_key: str, study_data: pd.Series) -> Tu
             }
         )
 
-        study_sponsors.append(
-            {"study_key": study_key, "sponsor_key": sponsor_key, "is_lead": True}
-        )
-    else:
-        log.warning(
-            f"No lead sponsor found for study {study_key}, page - NCT ID {nct_id}"
-        )
+        study_sponsor.append({"study_key": study_key, "sponsor_key": sponsor_key})
 
-    return sponsors, study_sponsors
-
-
-def transform_collaborators(study_key: str, study_data: pd.Series) -> Tuple:
-    collaborators = []
-    study_collaborators = []
-
-    # Extract collaborators
-    collaborators_index = NON_SCALAR_FIELDS["collaborators"]["index_field"]
-    collaborators_list = study_data.get(collaborators_index)
+    # collaborators
+    collaborators_list = study_data.get(f"{sponsor_collaborator_index}.collaborators")
 
     if (
         isinstance(collaborators_list, (list, np.ndarray))
@@ -79,8 +73,7 @@ def transform_collaborators(study_key: str, study_data: pd.Series) -> Tuple:
                 {
                     "study_key": study_key,
                     "collaborator_key": collaborator_key,
-                    "is_lead": False,
                 }
             )
 
-    return collaborators, study_collaborators
+    return sponsor, study_sponsor, collaborators, study_collaborators

@@ -170,12 +170,10 @@ NON_SCALAR_FIELDS = {
     # participantFlowModule
     "flow_groups": {
         "index_field": "resultsSection.participantFlowModule.groups",
-        
         "fields": ["id", "title", "description"],
     },
     "flow_periods": {
         "index_field": "resultsSection.participantFlowModule.periods",
-        
         "fields": ["title"],
         "non-scalar_fields": {
             "milestones": ["type", "comment", "achievements"],
@@ -185,7 +183,6 @@ NON_SCALAR_FIELDS = {
     # outcomeMeasuresModule
     "outcome_measures": {
         "index_field": "resultsSection.outcomeMeasuresModule.outcomeMeasures",
-        
         "fields": [
             "type",
             "title",
@@ -244,14 +241,14 @@ NON_SCALAR_FIELDS = {
         "index_field": "annotationSection.annotationModule.violationAnnotation.violationEvents",
         "non-scalar_fields": {
             "violations": [
-            "type",
-            "description",
-            "creationDate",
-            "issuedDate",
-            "releaseDate",
-            "postedDate",
-        ],
-        }
+                "type",
+                "description",
+                "creationDate",
+                "issuedDate",
+                "releaseDate",
+                "postedDate",
+            ],
+        },
     },
     # conditionBrowseModule
     "conditions_browse": {
