@@ -11,9 +11,12 @@ log = logging.getLogger("airflow.task")
 def transform_conditions(nct_id: str, study_key: str, study_data: pd.Series) -> Tuple:
     conditions = []
     study_conditions = []
+    keywords = []
+    study_keywords = []
 
     conditions_index = NON_SCALAR_FIELDS["conditions"]["index_field"]
-    conditions_list = study_data.get(conditions_index)
+
+    conditions_list = study_data.get(f"{conditions_index}.conditions")
 
     if isinstance(conditions_list, (list, np.ndarray)) and len(conditions_list) > 0:
         for condition in conditions_list:
@@ -30,20 +33,7 @@ def transform_conditions(nct_id: str, study_key: str, study_data: pd.Series) -> 
                 }
             )
 
-    else:
-        log.warning(
-            f"No conditions found for study {study_key}, page - NCT ID {nct_id}"
-        )
-
-    return conditions, study_conditions
-
-
-def transform_keywords(study_key: str, study_data: pd.Series) -> Tuple:
-    keywords = []
-    study_keywords = []
-
-    keywords_index = NON_SCALAR_FIELDS["keywords"]["index_field"]
-    keywords_list = study_data.get(keywords_index)
+    keywords_list = study_data.get(f"{conditions_index}.keywords")
 
     if isinstance(keywords_list, (list, np.ndarray)) and len(keywords_list) > 0:
 
@@ -59,4 +49,4 @@ def transform_keywords(study_key: str, study_data: pd.Series) -> Tuple:
                 }
             )
 
-    return keywords, study_keywords
+    return conditions, study_conditions, keywords, study_keywords

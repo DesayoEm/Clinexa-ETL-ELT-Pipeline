@@ -23,9 +23,12 @@ class StudyResult:
     study_conditions: List
     keywords: List
     study_keywords: List
-    arm_group_interventions: List
-    interventions: List
-    study_interventions: List
+    arm_groups: List
+    arm_interventions: List
+    intervention_names: List
+    study_intervention_names: List
+    other_interventions_names: List
+    study_other_interventions_names: List
     central_contacts: List
     study_central_contacts: List
     locations: List

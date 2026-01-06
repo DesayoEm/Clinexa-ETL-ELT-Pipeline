@@ -7,7 +7,6 @@ Location-level statuses can be inconsistent/outdated. Use study-level overall_st
 3. Study RECRUITING + conflicting locations AND one is RECRUITING -> UNCLEAR
 4. Study RECRUITING + no location says RECRUITING -> use location status
 
-This ensures patient matching prioritizes study-level recruitment status while flagging ambiguous cases.
 
 
 

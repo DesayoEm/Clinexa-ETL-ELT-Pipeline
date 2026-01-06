@@ -19,11 +19,9 @@ from include.etl.transformation.core_transformation.modules.sponsor_collaborator
 )
 from include.etl.transformation.core_transformation.modules.conditions import (
     transform_conditions,
-    transform_keywords,
 )
 from include.etl.transformation.core_transformation.modules.arms_intervention import (
-    transform_arm_groups,
-    transform_interventions,
+    transform_arms_interventions,
 )
 from include.etl.transformation.core_transformation.modules.contacts_location import (
     transform_locations,
@@ -123,21 +121,29 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
     result["study_collaborators"].extend(study_collaborators)
 
     # conditionsModule
-    conditions, study_conditions = transform_conditions(nct_id, study_key, study)
+    conditions, study_conditions, keywords, study_keywords = transform_conditions(
+        nct_id, study_key, study
+    )
     result["conditions"].extend(conditions)
     result["study_conditions"].extend(study_conditions)
-
-    keywords, study_keywords = transform_keywords(study_key, study)
     result["keywords"].extend(keywords)
     result["study_keywords"].extend(study_keywords)
 
     # armsInterventionsModule
-    arm_group_interventions = transform_arm_groups(study_key, study)
-    result["arm_group_interventions"].extend(arm_group_interventions)
-
-    interventions, study_interventions = transform_interventions(study_key, study)
-    result["interventions"].extend(interventions)
-    result["study_interventions"].extend(study_interventions)
+    (
+        arm_groups,
+        arm_interventions,
+        intervention_names,
+        study_intervention_names,
+        other_interventions_names,
+        study_other_interventions_names,
+    ) = transform_arms_interventions(study_key, study)
+    result["arm_groups"].extend(arm_groups)
+    result["arm_interventions"].extend(arm_interventions)
+    result["intervention_names"].extend(intervention_names)
+    result["study_intervention_names"].extend(study_intervention_names)
+    result["other_interventions_names"].extend(other_interventions_names)
+    result["study_other_interventions_names"].extend(study_other_interventions_names)
 
     # contactsLocationsModule
     central_contacts, study_central_contacts = transform_central_contacts(
@@ -179,9 +185,12 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
         study_conditions=result["study_conditions"],
         keywords=result["keywords"],
         study_keywords=result["study_keywords"],
-        arm_group_interventions=result["arm_group_interventions"],
-        interventions=result["interventions"],
-        study_interventions=result["study_interventions"],
+        arm_groups=result["arm_groups"],
+        arm_interventions=result["arm_interventions"],
+        intervention_names=result["intervention_names"],
+        study_intervention_names=result["study_intervention_names"],
+        other_interventions_names=result["other_interventions_names"],
+        study_other_interventions_names=result["study_other_interventions_names"],
         central_contacts=result["central_contacts"],
         study_central_contacts=result["study_central_contacts"],
         locations=result["locations"],
@@ -232,9 +241,14 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
     df_study_keywords = pd.DataFrame(results["study_keywords"])
 
     # armsInterventionsModule
-    df_interventions = pd.DataFrame(results["interventions"])
-    df_study_interventions = pd.DataFrame(results["study_interventions"])
-    df_arm_group_interventions = pd.DataFrame(results["arm_group_interventions"])
+    df_arm_groups = pd.DataFrame(results["arm_groups"])
+    df_arm_interventions = pd.DataFrame(results["arm_interventions"])
+    df_intervention_names = pd.DataFrame(results["intervention_names"])
+    df_study_intervention_names = pd.DataFrame(results["study_intervention_names"])
+    df_other_interventions_names = pd.DataFrame(results["other_interventions_names"])
+    df_study_other_interventions_names = pd.DataFrame(
+        results["study_other_interventions_names"]
+    )
 
     # contactsLocationsModule
     df_central_contacts = pd.DataFrame(results["central_contacts"])
@@ -256,10 +270,10 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
     df_collaborators = df_collaborators.drop_duplicates(subset=["collaborator_key"])
     df_conditions = df_conditions.drop_duplicates(subset=["condition_key"])
     df_keywords = df_keywords.drop_duplicates(subset=["keyword_key"])
-    df_interventions = df_interventions.drop_duplicates(subset=["intervention_key"])
-    df_arm_group_interventions = df_arm_group_interventions.drop_duplicates(
-        subset=["study_arm_key", "study_key", "arm_intervention_name"]
+    df_intervention_names = df_intervention_names.drop_duplicates(
+        subset=["intervention_key"]
     )
+
     df_locations = df_locations.drop_duplicates(subset=["location_key"])
     df_central_contacts = df_central_contacts.drop_duplicates(subset=["contact_key"])
 
@@ -287,9 +301,12 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
         df_study_conditions,
         df_keywords,
         df_study_keywords,
-        df_interventions,
-        df_study_interventions,
-        df_arm_group_interventions,
+        df_arm_groups,
+        df_arm_interventions,
+        df_intervention_names,
+        df_study_intervention_names,
+        df_other_interventions_names,
+        df_study_other_interventions_names,
         df_central_contacts,
         df_study_central_contacts,
         df_locations,

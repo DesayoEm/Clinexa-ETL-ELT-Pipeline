@@ -14,7 +14,7 @@
 
 
 ##### `SecondaryIdInfo`
-- **Definition**: Name of the sponsoring entity or individual
+- **Definition**: An identifier(s) (ID), if any, other than the organization's Unique Protocol Identification Number or the NCT number that is assigned to the clinical study.
 - **Data Type**: SecondaryIdInfo[]
 - **Fields**: [id, type, domain, link]
 
@@ -23,20 +23,15 @@
 
 ## SponsorCollaboratorsModule
 
-### sponsors
+- **Index Field:** `protocolSection.sponsorCollaboratorsModule`
+- **Description**: Organizations responsible for the study.
 
-**Index Field(s):** `protocolSection.sponsorCollaboratorsModule`
-- `protocolSection.sponsorCollaboratorsModule.collaborators[]`
 
-**NOTE**: *sponsor name and class are scalar values and MUST be extracted directly*
+### Non-scalar fields
+### `sponsor`
 
-**Object Type**: Simple dict (leadSponsor) / Array of dicts (collaborators)
-
-**Description**: Organizations responsible for the study.
-
-- **Lead Sponsor**: Exactly 1 per study. The organization or person who initiates the study and has authority and control over it.
-- **Collaborators**: 0 to many. Other organizations providing support (funding, design, implementation, data analysis, reporting).
-
+- **Definition**: Name of the sponsoring entity or individual
+- **Data Type**: Sponsor
 
 #### Fields
 
@@ -49,70 +44,85 @@
 - **Definition**: Category of the sponsoring organization
 - **Data Type**: Enum(AgencyClass)
 - **Enum Values**:
-  - `NIH` — National Institutes of Health
-  - `FED` — Other Federal Agency
-  - `OTHER_GOV` — Other Governmental (non-US)
-  - `INDIV` — Individual
-  - `INDUSTRY` — Industry/Pharmaceutical
-  - `NETWORK` — Research Network
-  - `AMBIG` — Ambiguous
-  - `OTHER` — Other
-  - `UNKNOWN` — Unknown
+  - `NIH` - National Institutes of Health
+  - `FED` - Other Federal Agency
+  - `OTHER_GOV` - Other Governmental (non-US)
+  - `INDIV` - Individual
+  - `INDUSTRY` - Industry/Pharmaceutical
+  - `NETWORK` - Research Network
+  - `AMBIG` - Ambiguous
+  - `OTHER` - Other
+  - `UNKNOWN` - Unknown
+
+
+### Non-scalar fields
+### `collaborators`
+
+- **Definition**: Other organizations, if any, providing support. Support may include funding, design, implementation, data analysis or reporting.
+- **Data Type**: Sponsor[]
+
+#### Fields
+
+##### `name`
+- **Definition**: Name of the sponsoring entity or individual
+- **Data Type**: Text
+- **Limit**: 160 characters
+
+##### `class`
+- **Definition**: Category of the sponsoring organization
+- **Data Type**: Enum(AgencyClass)
+- **Enum Values**:
+  - `NIH` - National Institutes of Health
+  - `FED` - Other Federal Agency
+  - `OTHER_GOV` - Other Governmental (non-US)
+  - `INDIV` - Individual
+  - `INDUSTRY` - Industry/Pharmaceutical
+  - `NETWORK` - Research Network
+  - `AMBIG` - Ambiguous
+  - `OTHER` - Other
+  - `UNKNOWN` - Unknown
 
 
 
-#### Model Mapping
+- **Lead Sponsor**: Exactly 1 per study. The organization or person who initiates the study and has authority and control over it.
+- **Collaborators**: 0 to many. Other organizations providing support (funding, design, implementation, data analysis, reporting).
 
-- **Target Table**: `dim_sponsors`
-- **Bridge Table**: `bridge_study_sponsors` 
-- **Discriminator**: `is_lead_sponsor` (boolean) — added during transformation
+
 
 ---
 
 
 ## ConditionsModule 
 
-### conditions
+- **Index Field:** `protocolSection.conditionsModule`
+- **Description**: The name(s) of the disease(s) or condition(s) studied in the clinical study, or the focus of the clinical study.
 
-**Index Field(s):** `protocolSection.conditionsModule.conditions`
 
-**Object Type**: Simple array
+### Non-scalar fields
+###  `conditions`
 
-**Description**: The name(s) of the disease(s) or condition(s) studied in the clinical study, or the focus of the clinical study.
+- **Object Type**: text[]
 
-#### Model Mapping
-- **Target Table**: `conditions`
-- **Bridge Table**: `bridge_study_conditions` 
-- **column_name**: `condition_name` 
+### `keywords`
 
----
+- **Description**: Words or phrases that best describe the protocol. Keywords help users find studies in the database
+- **Object Type**: text[]
 
-### keywords
-
-**Index Field(s):** `protocolSection.conditionsModule.keywords`
-
-**Object Type**: Simple array
-
-**Description**: Words or phrases that best describe the protocol. Keywords help users find studies in the database
-
-#### Model Mapping
-- **Target Table**: `keywords`
-- **Bridge Table**: `bridge_study_keywords` 
 
 
 ---
 
 ## armsInterventionsModule 
 
-### arm_groups
+- **Index Field:** `protocolSection.armsInterventionsModule`
+- **Description**: A description of each arm of the clinical trial that indicates its role in the clinical trial
 
-**Index Field:** `protocolSection.armsInterventionsModule.armGroups[]`
+### Non-scalar fields
+### `ArmGroup`
 
-**Object Type**: Array of dicts
+- **Object Type**: ArmGroup[]
+- **Description**: Pre-specified group or subgroup of participants assigned to receive specific intervention(s) (or no intervention) according to protocol. For interventional studies only. Observational studies use Groups/Cohorts with the same structure but different semantics.
 
-**Description**: Pre-specified group or subgroup of participants assigned to receive specific intervention(s) (or no intervention) according to protocol. For interventional studies only. Observational studies use Groups/Cohorts with the same structure but different semantics.
-
----
 
 #### Fields
 
@@ -120,52 +130,35 @@
 - **Definition**: Short name used to identify the arm
 - **Data Type**: Text
 - **Limit**: 100 characters
-- **Required**: Yes
 
 ##### `type`
 - **Definition**: The role of the arm in the clinical trial
 - **Data Type**: Enum(ArmGroupType)
-- **Required**: Yes
 - **Enum Values**:
-  - `EXPERIMENTAL` — Experimental
-  - `ACTIVE_COMPARATOR` — Active Comparator
-  - `PLACEBO_COMPARATOR` — Placebo Comparator
-  - `SHAM_COMPARATOR` — Sham Comparator
-  - `NO_INTERVENTION` — No Intervention
-  - `OTHER` — Other
+  - `EXPERIMENTAL` - Experimental
+  - `ACTIVE_COMPARATOR` - Active Comparator
+  - `PLACEBO_COMPARATOR` - Placebo Comparator
+  - `SHAM_COMPARATOR` - Sham Comparator
+  - `NO_INTERVENTION` - No Intervention
+  - `OTHER` - Other
 
 ##### `description`
 - **Definition**: Additional descriptive information to differentiate this arm from others (including which interventions are administered)
 - **Data Type**: Markup
 - **Limit**: 999 characters
-- **Required**: Conditional
 
-#### Nested
-######  `interventionNames`
+#####  `interventionNames`
 - **Definition**: Names of interventions associated with this arm. References `interventions[].name` within the same study.
-- **Data Type**: Array of Text
+- **Data Type**: text[]
 - **Limit**: 200 characters per name
-- **Required**: Yes (for interventional studies)
 
 
 
-#### Dimensional Model Mapping
 
-- **Bridge Table**: `bridge_study_arm_groups` 
-- **Surrogate Key**: `hash(study_key, label)`
+### `intervention`
 
-
----
-
-### interventions
-
-**Index Field:** `protocolSection.armsInterventionsModule.interventions[]`
-
-**Object Type**: Array of dicts
-
-**Description**: The intervention(s) studied in the clinical trial. For interventional studies, at least one required. For observational studies, specifies interventions/exposures of interest if any.
-
----
+- **Description**: The intervention(s) studied in the clinical trial. For interventional studies, at least one required. For observational studies, specifies interventions/exposures of interest if any.
+- **Object Type**: Intervention[]
 
 #### Fields
 
@@ -173,57 +166,42 @@
 - **Definition**: Brief descriptive name for the intervention. Non-proprietary name required if available.
 - **Data Type**: Text
 - **Limit**: 200 characters
-- **Required**: Yes
+
 
 ##### `type`
 - **Definition**: General type of intervention
 - **Data Type**: Enum(InterventionType)
-- **Required**: Yes
 - **Enum Values**:
-  - `DRUG` — Drug (including placebo)
-  - `DEVICE` — Device (including sham)
-  - `BIOLOGICAL` — Biological/Vaccine
-  - `PROCEDURE` — Procedure/Surgery
-  - `RADIATION` — Radiation
-  - `BEHAVIORAL` — Behavioral (e.g., psychotherapy, lifestyle counseling)
-  - `GENETIC` — Genetic (gene transfer, stem cell, recombinant DNA)
-  - `DIETARY_SUPPLEMENT` — Dietary Supplement (vitamins, minerals)
-  - `COMBINATION_PRODUCT` — Combination Product (drug+device, biological+device, etc.)
-  - `DIAGNOSTIC_TEST` — Diagnostic Test (imaging, in vitro)
-  - `OTHER` — Other
+  - `DRUG` - Drug (including placebo)
+  - `DEVICE` - Device (including sham)
+  - `BIOLOGICAL` - Biological/Vaccine
+  - `PROCEDURE` - Procedure/Surgery
+  - `RADIATION` - Radiation
+  - `BEHAVIORAL` - Behavioral (e.g., psychotherapy, lifestyle counseling)
+  - `GENETIC` - Genetic (gene transfer, stem cell, recombinant DNA)
+  - `DIETARY_SUPPLEMENT` - Dietary Supplement (vitamins, minerals)
+  - `COMBINATION_PRODUCT` - Combination Product (drug+device, biological+device, etc.)
+  - `DIAGNOSTIC_TEST` - Diagnostic Test (imaging, in vitro)
+  - `OTHER` - Other
 
 ##### `description`
 - **Definition**: Details sufficient to distinguish this intervention from similar ones (e.g., dosage form, dosage, frequency, duration for drugs)
 - **Data Type**: Markup
 - **Limit**: 1,000 characters
-- **Required**: Yes
 
-##### `armGroupLabels`
-- **Definition**: Labels of arm groups that receive this intervention. References `armGroups[].label` within the same study.
-- **Data Type**: Array of Text
-- **Required**: Yes (if multiple arms exist)
 
 ##### `otherNames`
 - **Definition**: Other current/former names or aliases (brand names, serial numbers)
-- **Data Type**: Array of Text
+- **Data Type**: text[]
 - **Limit**: 200 characters per name
-- **Required**: No
 
----
 
-#### Dimensional Model Mapping
-
-- **Target Table**: `dim_interventions`
-- **Surrogate Key**: `hash(study_key, name, type)`
-- **Bridge Table**: `bridge_study_interventions` (study_key, intervention_key)
-
----
 
 ### Arm <-->Intervention Relationship
 
 **Source Data**: The API provides bidirectional references:
-- `armGroups[].interventionNames` — intervention names per arm
-- `interventions[].armGroupLabels` — arm labels per intervention
+- `armGroups[].interventionNames` - intervention names per arm
+- `interventions[].armGroupLabels` - arm labels per intervention
 
 **Decision**: `armGroups[].interventionNames` as the source of truth for arm interventions and interventions[] as the source of truth interventions
 
@@ -235,29 +213,21 @@
 **Implication**: Queries for "which arms use this intervention" require joining through `bridge_arm_interventions` from the arm side. We do not model the reverse relationship from `interventions[].armGroupLabels`.
 
 
-### design_who_masked
-**Index Field:** protocolSection.designModule.designInfo.maskingInfo.whoMasked
-
-**Definition**: The party or parties involved in the clinical trial who are prevented from having knowledge of the interventions assigned to individual participants
-
-**DataType**: [Enum(WhoMasked)]
-
-**Enum Values**:
-* PARTICIPANT - Participant
-* CARE_PROVIDER - Care Provider
-* INVESTIGATOR - Investigator
-* OUTCOMES_ASSESSOR - Outcomes Assessor
+---
 
 
 ## contactsLocationsModule
 
-#### locations
+- **Index Field:** `protocolSection.contactsLocationsModule`
+- **Description**:Contacts, Locations, and Investigator Information
 
-**Index Field(s):** `protocolSection.contactsLocationsModule.locations`
+### Non-scalar fields
+### `locations`
 
-**Object Type**: Array of Dicts
+- **Object Type**: Location[]
+- **Description**: Participating facility in a clinical study
 
-**Description**: Participating facility in a clinical study
+#### Fields
 
 ##### `facility`
 - **Definition**: ull name of the organization where the clinical study is being conducted
@@ -279,18 +249,6 @@
   - `WITHDRAWN` - Withdrawn
   - `AVAILABLE` - Available
 
-    
-**LOCATION STATUS RESOLUTION**
-
-Location-level statuses can be inconsistent/outdated. Use study-level overall_status as the authoritative source:
-
-1. Study COMPLETED/TERMINATED -> inherit study status (can't recruit)
-2. Study NOT_YET_RECRUITING -> inherit study status (hasn't started)
-3. Study RECRUITING + conflicting locations AND one is RECRUITING -> UNCLEAR
-4. Study RECRUITING + no location says RECRUITING -> use location status
-
-This ensures patient matching prioritizes study-level recruitment status while flagging ambiguous cases.
-"""
 
 ##### `city`
 - **Definition**: City
@@ -308,19 +266,15 @@ This ensures patient matching prioritizes study-level recruitment status while f
 - **Definition**: Lat and Lon
 - **Data Type**: Dict
 
-#### Nested
+
 ##### `contacts`
+- **Data Type**: JSON
 --- Saved as a JSON blob
 
 Extract locations and stores location contact as JSON blob.
 NOTE: Officials are stored denormalized as JSON since not used for filtering/analysis.
 Avoids snowflaking the schema while preserving all contact information for downstream applications.
 
-#### Model Mapping
-- **Target Table**: `locations`
-- **Bridge Table**: `bridge_study_locations` 
-
---- 
 
 ### central_contacts
 

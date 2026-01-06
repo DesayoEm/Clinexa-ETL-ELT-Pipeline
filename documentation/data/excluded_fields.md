@@ -111,6 +111,34 @@
 
 ---
 
+## armsInterventionsModule
+
+##### `armGroupLabels`
+- **Index Field:** `protocolSection.armsInterventionsModule.armGroups.armGroupLabels`
+- **Definition**: Labels of arm groups that receive this intervention. References `armGroups[].label` within the same study.
+- **Data Type**: Array of Text
+- **Required**: Yes (if multiple arms exist)
+
+
+### Arm <-->Intervention Relationship
+
+**Source Data**: The API provides bidirectional references:
+- `armGroups[].interventionNames` — intervention names per arm
+- `interventions[].armGroupLabels` — arm labels per intervention
+
+**Decision**: `armGroups[].interventionNames` as the source of truth for arm interventions and interventions[] as the source of truth interventions
+
+**Rationale**:
+1. Matches analytical workflow (arm -> intervention, not reverse)
+2. User-entered data may have inconsistencies between the two lists
+3. Avoids reconciliation logic and potential mismatches from bidirectional data quality issues
+
+**Implication**: Queries for "which arms use this intervention" require joining through `bridge_arm_interventions` from the arm side. We do not model the reverse relationship from `interventions[].armGroupLabels`.
+
+
+
+---
+
 ## statusModule
 ### delayed_posting
 - **Index Field:** `protocolSection.statusModule.delayedPosting`
