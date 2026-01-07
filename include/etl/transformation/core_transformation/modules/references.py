@@ -1,18 +1,22 @@
-from typing import List, Tuple
+from typing import Tuple
 import logging
 import pandas as pd
 import numpy as np
 from include.etl.transformation.config import NON_SCALAR_FIELDS
 from include.etl.transformation.utils import generate_key
 
+
 log = logging.getLogger("airflow.task")
 
 
-def transform_references(study_key: str, study_data: pd.Series) -> List:
+def transform_reference_module(study_key: str, study_data: pd.Series) -> Tuple:
     study_references = []
+    link_references = []
+    ipd_references = []
 
     references_index = NON_SCALAR_FIELDS["references"]["index_field"]
-    references_list = study_data.get(references_index)
+
+    references_list = study_data.get(f"{references_index}.references")
 
     if isinstance(references_list, (list, np.ndarray)) and len(references_list) > 0:
 
@@ -29,20 +33,12 @@ def transform_references(study_key: str, study_data: pd.Series) -> List:
                 }
             )
 
-    return study_references
-
-
-def transform_links(study_key: str, study_data: pd.Series) -> List:
-    study_links = []
-
-    links_index = NON_SCALAR_FIELDS["see_also"]["index_field"]
-    links_list = study_data.get(links_index)
-
+    links_list = study_data.get(f"{references_index}.seeAlsoLinks")
     if isinstance(links_list, (list, np.ndarray)) and len(links_list) > 0:
 
         for link in links_list:
             label = link.get("label")
-            study_links.append(
+            link_references.append(
                 {
                     "study_key": study_key,
                     "link_key": link,
@@ -51,14 +47,7 @@ def transform_links(study_key: str, study_data: pd.Series) -> List:
                 }
             )
 
-    return study_links
-
-
-def transform_ipds(study_key: str, study_data: pd.Series) -> List:
-    study_ipds = []
-
-    ipds_index = NON_SCALAR_FIELDS["avail_ipds"]["index_field"]
-    ipds_list = study_data.get(ipds_index)
+    ipds_list = study_data.get(f"{references_index}.availIpds")
 
     if isinstance(ipds_list, (list, np.ndarray)) and len(ipds_list) > 0:
 
@@ -68,7 +57,7 @@ def transform_ipds(study_key: str, study_data: pd.Series) -> List:
             ipd_url = ipd.get("url")
 
             ipd_key = generate_key(study_key, ipd_id, ipd_type, ipd_url)
-            study_ipds.append(
+            ipd_references.append(
                 {
                     "study_key": study_key,
                     "ipd_key": ipd_key,
@@ -78,4 +67,5 @@ def transform_ipds(study_key: str, study_data: pd.Series) -> List:
                     "comment": ipd.get("comment"),
                 }
             )
-    return study_ipds
+
+    return study_references, link_references, ipd_references

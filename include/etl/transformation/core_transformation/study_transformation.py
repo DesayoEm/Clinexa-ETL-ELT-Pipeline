@@ -32,13 +32,10 @@ from include.etl.transformation.core_transformation.modules.contacts_location im
     transform_contacts_location_module,
 )
 from include.etl.transformation.core_transformation.modules.references import (
-    transform_references,
-    transform_links,
-    transform_ipds,
+    transform_reference_module,
 )
-from include.etl.transformation.core_transformation.modules.participant_flow import (
-    transform_flow_events,
-    transform_flow_groups,
+from include.etl.transformation.core_transformation.modules.outcome_measures import (
+    transform_outcome_measures_module,
 )
 
 log = logging.getLogger("airflow.task")
@@ -167,21 +164,32 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
     result["study_locations"].extend(study_locations)
 
     # referencesModule
-    references = transform_references(study_key, study)
+    references, link_references, ipd_references = transform_reference_module(
+        study_key, study
+    )
     result["references"].extend(references)
-
-    links = transform_links(study_key, study)
-    result["links"].extend(links)
-
-    ipds = transform_ipds(study_key, study)
-    result["ipds"].extend(ipds)
+    result["link_references"].extend(link_references)
+    result["ipd_references"].extend(ipd_references)
 
     # outcomeMeasuresModule
-    flow_groups = transform_flow_groups(study_key, study)
-    result["flow_groups"].extend(flow_groups)
-
-    flow_period_events = transform_flow_events(study_key, study)
-    result["flow_period_events"].extend(flow_period_events)
+    (
+        outcome_measures,
+        outcome_measure_groups,
+        outcome_measure_denom_units,
+        outcome_measure_denom_counts,
+        outcome_measure_measurements,
+        outcome_measure_analyses,
+        outcome_measure_comparison_groups,
+    ) = transform_outcome_measures_module(study_key, study)
+    result["outcome_measures"].extend(outcome_measures)
+    result["outcome_measure_groups"].extend(outcome_measure_groups)
+    result["outcome_measure_denom_units"].extend(outcome_measure_denom_units)
+    result["outcome_measure_denom_counts"].extend(outcome_measure_denom_counts)
+    result["outcome_measure_measurements"].extend(outcome_measure_measurements)
+    result["outcome_measure_analyses"].extend(outcome_measure_analyses)
+    result["outcome_measure_comparison_groups"].extend(
+        outcome_measure_comparison_groups
+    )
 
     return StudyResult(
         studies=result["studies"],
@@ -209,10 +217,15 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
         locations=result["locations"],
         study_locations=result["study_locations"],
         references=result["references"],
-        links=result["links"],
-        ipds=result["ipds"],
-        flow_groups=result["flow_groups"],
-        flow_period_events=result["flow_period_events"],
+        link_references=result["link_references"],
+        ipd_references=result["ipd_references"],
+        outcome_measures=result["outcome_measures"],
+        outcome_measure_groups=result["outcome_measure_groups"],
+        outcome_measure_denom_units=result["outcome_measure_denom_units"],
+        outcome_measure_denom_counts=result["outcome_measure_denom_counts"],
+        outcome_measure_measurements=result["outcome_measure_measurements"],
+        outcome_measure_analyses=result["outcome_measure_analyses"],
+        outcome_measure_comparison_groups=result["outcome_measure_comparison_groups"],
     )
 
 
@@ -276,12 +289,25 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
 
     # referencesModule
     df_references = pd.DataFrame(results["references"])
-    df_links = pd.DataFrame(results["links"])
-    df_ipds = pd.DataFrame(results["ipds"])
+    df_link_references = pd.DataFrame(results["link_references"])
+    df_ipd_references = pd.DataFrame(results["ipd_references"])
 
     # outcomeMeasuresModule
-    df_flow_groups = pd.DataFrame(results["flow_groups"])
-    df_flow_period_events = pd.DataFrame(results["flow_period_events"])
+    df_outcome_measures = pd.DataFrame(results["outcome_measures"])
+    df_outcome_measure_groups = pd.DataFrame(results["outcome_measure_groups"])
+    df_outcome_measure_denom_units = pd.DataFrame(
+        results["outcome_measure_denom_units"]
+    )
+    df_outcome_measure_denom_counts = pd.DataFrame(
+        results["outcome_measure_denom_counts"]
+    )
+    df_outcome_measure_measurements = pd.DataFrame(
+        results["outcome_measure_measurements"]
+    )
+    df_outcome_measure_analyses = pd.DataFrame(results["outcome_measure_analyses"])
+    df_outcome_measure_comparison_groups = pd.DataFrame(
+        results["outcome_measure_comparison_groups"]
+    )
 
     # dedupe
     df_sponsors = df_sponsors.drop_duplicates(subset=["sponsor_key"])
@@ -294,18 +320,6 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
 
     df_locations = df_locations.drop_duplicates(subset=["location_key"])
     df_central_contacts = df_central_contacts.drop_duplicates(subset=["contact_key"])
-
-    df_references = df_references.drop_duplicates(subset=["study_key", "ref_key"])
-    df_links = df_links.drop_duplicates(subset=["study_key", "link_key", "url"])
-    df_ipds = df_ipds.drop_duplicates(subset=["study_key", "ipd_key"])
-
-    df_flow_groups = df_flow_groups.drop_duplicates(subset=["study_key", "group_key"])
-
-    # Aggregate to mitigate flow duplicates. check docs/data_quality_issues.md for details
-    df_flow_period_events = df_flow_period_events.groupby(
-        ["study_key", "period_title", "event_class", "event_type", "group_id"],
-        as_index=False,
-    ).agg({"num_subjects": "sum", "period_key": "first"})
 
     return [
         df_studies,
@@ -333,8 +347,13 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
         df_locations,
         df_study_locations,
         df_references,
-        df_links,
-        df_ipds,
-        df_flow_groups,
-        df_flow_period_events,
+        df_link_references,
+        df_ipd_references,
+        df_outcome_measures,
+        df_outcome_measure_groups,
+        df_outcome_measure_denom_units,
+        df_outcome_measure_denom_counts,
+        df_outcome_measure_measurements,
+        df_outcome_measure_analyses,
+        df_outcome_measure_comparison_groups,
     ]

@@ -37,10 +37,15 @@ class StudyResult:
     locations: List
     study_locations: List
     references: List
-    links: List
-    ipds: List
-    flow_groups: List
-    flow_period_events: List
+    link_references: List
+    ipd_references: List
+    outcome_measures: List
+    outcome_measure_groups: List
+    outcome_measure_denom_units: List
+    outcome_measure_denom_counts: List
+    outcome_measure_measurements: List
+    outcome_measure_analyses: List
+    outcome_measure_comparison_groups: List
 
     def tables(self) -> Dict[str, List[Dict]]:
         return asdict(self)

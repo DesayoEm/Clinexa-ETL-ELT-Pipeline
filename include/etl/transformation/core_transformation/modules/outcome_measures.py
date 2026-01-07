@@ -8,7 +8,7 @@ from include.etl.transformation.utils import generate_key
 log = logging.getLogger("airflow.task")
 
 
-def transform_outcome_measures(study_key: str, study_data: pd.Series) -> Tuple:
+def transform_outcome_measures_module(study_key: str, study_data: pd.Series) -> Tuple:
     outcome_measures = []
     outcome_measure_groups = []
     outcome_measure_denom_units = []
@@ -18,7 +18,7 @@ def transform_outcome_measures(study_key: str, study_data: pd.Series) -> Tuple:
     outcome_measure_comparison_groups = []
 
     outcomes_index = NON_SCALAR_FIELDS["outcome_measures"]["index_field"]
-    outcomes_measures_list = study_data.get(outcomes_index)
+    outcomes_measures_list = study_data.get(f"{outcomes_index}.outcomeMeasures")
 
     if (
         isinstance(outcomes_measures_list, (list, np.ndarray))
@@ -54,7 +54,7 @@ def transform_outcome_measures(study_key: str, study_data: pd.Series) -> Tuple:
                 }
             )
 
-            groups = outcome_measure.get("groups", [])
+            groups = outcome_measure.get("groups")
             if isinstance(groups, (list, np.ndarray)) and len(groups) > 0:
                 for group in groups:
                     group_id = group.get("id")
@@ -118,35 +118,43 @@ def transform_outcome_measures(study_key: str, study_data: pd.Series) -> Tuple:
 
             classes = outcome_measure.get("classes")
             if isinstance(classes, (list, np.ndarray)) and len(classes) > 0:
-                categories = classes[0].get(
-                    "categories"
-                )  # class is not a true container and only wraps categories contrary to what the docs say
-                if isinstance(categories, (list, np.ndarray)) and len(categories) > 0:
-                    for cat_idx, category in enumerate(categories):
-                        measurements = category.get("measurements")
-                        if (
-                            isinstance(measurements, (list, np.ndarray))
-                            and len(measurements) > 0
-                        ):
-                            for measurement in measurements:
-                                meas_group_id = measurement.get("groupId")
-                                meas_group_key = generate_key(
-                                    study_key, outcome_measure_key, meas_group_id
-                                )
+                for single_class in classes:
+                    # class is not a true container and only wraps categories contrary to what the docs say
+                    categories = single_class.get("categories")
 
-                                outcome_measure_measurements.append(
-                                    {
-                                        "measurement_key": meas_group_key,
-                                        "outcome_measure_key": outcome_measure_key,
-                                        "study_key": study_key,
-                                        "group_id": meas_group_id,
-                                        "value": measurement.get("value"),
-                                        "lower_limit": measurement.get("lowerLimit"),
-                                        "upper_limit": measurement.get("upperLimit"),
-                                        "spread": measurement.get("spread"),
-                                        "comment": measurement.get("comment"),
-                                    }
-                                )
+                    if (
+                        isinstance(categories, (list, np.ndarray))
+                        and len(categories) > 0
+                    ):
+                        for cat_idx, category in enumerate(categories):
+                            measurements = category.get("measurements")
+                            if (
+                                isinstance(measurements, (list, np.ndarray))
+                                and len(measurements) > 0
+                            ):
+                                for measurement in measurements:
+                                    meas_group_id = measurement.get("groupId")
+                                    meas_group_key = generate_key(
+                                        study_key, outcome_measure_key, meas_group_id
+                                    )  # group keys must be created the same way
+
+                                    outcome_measure_measurements.append(
+                                        {
+                                            "measurement_key": meas_group_key,
+                                            "outcome_measure_key": outcome_measure_key,
+                                            "study_key": study_key,
+                                            "group_id": meas_group_id,
+                                            "value": measurement.get("value"),
+                                            "lower_limit": measurement.get(
+                                                "lowerLimit"
+                                            ),
+                                            "upper_limit": measurement.get(
+                                                "upperLimit"
+                                            ),
+                                            "spread": measurement.get("spread"),
+                                            "comment": measurement.get("comment"),
+                                        }
+                                    )
 
             analyses = outcome_measure.get("analyses")
             if isinstance(analyses, (list, np.ndarray)) and len(analyses) > 0:
@@ -175,20 +183,22 @@ def transform_outcome_measures(study_key: str, study_data: pd.Series) -> Tuple:
                         }
                     )
 
-                    analysis_comparison_groups = analysis.get("comparisonGroups")
+                    analysis_comparison_groups = analysis.get("groupIds")
                     if (
                         isinstance(analysis_comparison_groups, (list, np.ndarray))
                         and len(analysis_comparison_groups) > 0
                     ):
-                        for group in analysis_comparison_groups:
+                        for group_id in analysis_comparison_groups:
+                            group_key = generate_key(
+                                study_key, outcome_measure_key, group_id
+                            )
                             outcome_measure_comparison_groups.append(
                                 {
-                                    "analysis_key": analysis_key,
-                                    "outcome_measure_key": group.get(
-                                        "outcomeMeasureKey"
-                                    ),
                                     "study_key": study_key,
-                                    "group_id": group.get("groupId"),
+                                    "outcome_measure_key": outcome_measure_key,
+                                    "analysis_key": analysis_key,
+                                    "group_key": group_key,
+                                    "group_id": group_id,
                                 }
                             )
 

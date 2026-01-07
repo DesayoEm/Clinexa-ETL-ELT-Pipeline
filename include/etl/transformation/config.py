@@ -146,41 +146,40 @@ NON_SCALAR_FIELDS = {
             "avail_ipds": ["id", "type", "url", "comment"],
         },
     },
-    # participantFlowModule
-    "flow_groups": {
-        "index_field": "resultsSection.participantFlowModule.groups",
-        "fields": ["id", "title", "description"],
-    },
-    "flow_periods": {
-        "index_field": "resultsSection.participantFlowModule.periods",
-        "fields": ["title"],
-        "non-scalar_fields": {
-            "milestones": ["type", "comment", "achievements"],
-            "dropWithdraws": ["type", "comment", "reasons"],
-        },
-    },
     # outcomeMeasuresModule
     "outcome_measures": {
-        "index_field": "resultsSection.outcomeMeasuresModule.outcomeMeasures",
-        "fields": [
-            "type",
-            "title",
-            "description",
-            "populationDescription",
-            "reportingStatus",
-            "anticipatedPostingDate",
-            "paramType",
-            "dispersionType",
-            "unitOfMeasure",
-            "calculatePct",
-            "timeFrame",
-            "denomUnitsSelected" "typeUnitsAnalyzed",
-        ],
+        "index_field": "resultsSection.outcomeMeasuresModule",
         "non-scalar_fields": {
+            "outcomeMeasures": [
+                "type",
+                "title",
+                "description",
+                "populationDescription",
+                "reportingStatus",
+                "anticipatedPostingDate",
+                "paramType",
+                "dispersionType",
+                "unitOfMeasure",
+                "calculatePct",
+                "timeFrame",
+                "denomUnitsSelected" "typeUnitsAnalyzed",
+            ],
             "OutcomeGroup": ["id", "title", "description"],
             "OutcomeDenom": ["units", "counts", ["groupId", "value"]],
             "OutcomeClass": ["categories", "comment", "achievements"],
             "OutcomeAnalysis ": ["type", "comment", "reasons"],
+        },
+    },
+    # participantFlowModule
+    "participant_flow": {
+        "index_field": "resultsSection.participantFlowModule",
+        "non-scalar_fields": {
+            "groups": ["id", "title", "description"],
+            "periods": [
+                {"milestones": ["type", "comment", "achievements"]},
+                {"dropWithdraws": ["type", "comment", "reasons"]},
+            ],
+            "avail_ipds": ["id", "type", "url", "comment"],
         },
     },
     # adverseEventsModule

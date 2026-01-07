@@ -302,7 +302,7 @@
 
 ### `centralContacts`
 - **Definition**: Contact person(s) for general enrollment questions across all study locations. Required if no facility-level contacts provided.
-- **Object Type**: Array of dicts
+- **Object Type**: centralContacts[]
 - **Cardinality**: 0 to many (but at least one central OR facility contact required per study)
 
 
@@ -388,16 +388,16 @@ Extract locations and stores location contact as JSON blob.
 NOTE: Officials are stored denormalized as JSON since not used for filtering/analysis.
 Avoids snowflaking the schema while preserving all contact information for downstream applications.
 
-
-
 ---
 
+## referencesModule
 
+- **Index Field:** `protocolSection.referencesModule`
+- **Description**:Citations to publications related to the protocol
 
-## References
+### Non-scalar fields
 
-### references
-- **Index Field:** `protocolSection.referencesModule.references`
+### `references`
 - **Definition**: Citations to publications related to the protocol
 - **DataType**: Reference[]
 
@@ -422,8 +422,8 @@ Avoids snowflaking the schema while preserving all contact information for downs
 - **Data Type**: Text
 - **Required**: Yes
 
-### see_also
-- **Index Field:** `protocolSection.referencesModule.seeAlsoLinks`
+
+### `see_also`
 - **Definition**:  A website directly relevant to the protocol 
 - **DataType**: SeeAlsoLink[]
 
@@ -442,7 +442,6 @@ Avoids snowflaking the schema while preserving all contact information for downs
 
 
 ### availIpds
-- **Index Field:** `protocolSection.referencesModule.availIpds`
 - **Definition**: Available individual participant data (IPD) sets and supporting information that are being shared for the study.
 - **DataType**: AvailIpd[]
 
@@ -469,7 +468,7 @@ Avoids snowflaking the schema while preserving all contact information for downs
 - **Limit**: 30 characters
 
 
-
+---
 
 ### FlowGroup 
 - **Index Field:** `resultsSection.participantFlowModule.groups`
