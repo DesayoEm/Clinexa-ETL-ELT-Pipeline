@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Tuple
 import logging
 import pandas as pd
 import numpy as np
@@ -8,12 +8,18 @@ from include.etl.transformation.utils import generate_key
 log = logging.getLogger("airflow.task")
 
 
-def transform_central_contacts(study_key: str, study_data: pd.Series) -> Tuple:
+def transform_contacts_location_module(study_key: str, study_data: pd.Series) -> Tuple:
     central_contacts = []
     study_central_contacts = []
+    locations = []
+    study_locations = []
 
-    central_contacts_index = NON_SCALAR_FIELDS["central_contacts"]["index_field"]
-    central_contacts_list = study_data.get(central_contacts_index)
+    contacts_locations_index = NON_SCALAR_FIELDS["contacts_location"]["index_field"]
+
+    # contacts
+    central_contacts_list = study_data.get(
+        f"{contacts_locations_index}.centralContacts"
+    )
 
     if (
         isinstance(central_contacts_list, (list, np.ndarray))
@@ -45,18 +51,8 @@ def transform_central_contacts(study_key: str, study_data: pd.Series) -> Tuple:
                 }
             )
 
-    return central_contacts, study_central_contacts
-
-
-def transform_locations(study_key: str, study_data: pd.Series) -> Tuple:
-    """
-    Extract locations with status resolution
-    """
-    locations = []
-    study_locations = []
-
-    locations_index = NON_SCALAR_FIELDS["locations"]["index_field"]
-    locations_list = study_data.get(locations_index)
+    # locations
+    locations_list = study_data.get(f"{contacts_locations_index}.locations")
 
     if isinstance(locations_list, (list, np.ndarray)) and len(locations_list) > 0:
         for location in locations_list:
@@ -72,9 +68,9 @@ def transform_locations(study_key: str, study_data: pd.Series) -> Tuple:
                 "city": city,
                 "state": state,
                 "country": state,
-                "status": location.get("status"),
             }
             geopoint = location.get("geoPoint")
+
             if isinstance(geopoint, dict) and geopoint:
                 curr_location["lat"] = (
                     float(geopoint.get("lat")) if geopoint.get("lat") else None
@@ -85,27 +81,13 @@ def transform_locations(study_key: str, study_data: pd.Series) -> Tuple:
 
             locations.append(curr_location)
 
-            # resolve location status
-
-            overall_status = study_data.get(
-                "protocolSection.statusModule.overallStatus"
-            )
-
-            statuses = [loc.get("status") for loc in locations if loc.get("status")]
-            unique_statuses = set(statuses)
-
-            resolved_status, status_type = dq_handler.resolve_location_status(
-                overall_status, unique_statuses
-            )
-
             study_locations.append(
                 {
                     "study_key": study_key,
                     "location_key": location_key,
-                    "status": resolved_status,
-                    "status_type": status_type,  # aCTUAL or inferred
-                    "contacts": location.get("contacts"),
+                    "status": location.get("status"),
+                    "contacts": location.get("contacts"),  # json blob
                 }
             )
 
-    return locations, study_locations
+    return central_contacts, study_central_contacts, locations, study_locations

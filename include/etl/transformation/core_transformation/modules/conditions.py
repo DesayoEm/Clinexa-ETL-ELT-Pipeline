@@ -8,7 +8,9 @@ from include.etl.transformation.utils import generate_key
 log = logging.getLogger("airflow.task")
 
 
-def transform_conditions(nct_id: str, study_key: str, study_data: pd.Series) -> Tuple:
+def transform_conditions_module(
+    nct_id: str, study_key: str, study_data: pd.Series
+) -> Tuple:
     conditions = []
     study_conditions = []
     keywords = []

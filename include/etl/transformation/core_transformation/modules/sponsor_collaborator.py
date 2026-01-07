@@ -8,7 +8,7 @@ from include.etl.transformation.utils import generate_key
 log = logging.getLogger("airflow.task")
 
 
-def transform_sponsor_and_collaborators(
+def transform_sponsor_and_collaborators_module(
     nct_id: str, study_key: str, study_data: pd.Series
 ) -> Tuple:
     """

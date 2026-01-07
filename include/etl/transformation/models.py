@@ -29,6 +29,9 @@ class StudyResult:
     study_intervention_names: List
     other_interventions_names: List
     study_other_interventions_names: List
+    primary_outcomes: List
+    secondary_outcomes: List
+    other_outcomes: List
     central_contacts: List
     study_central_contacts: List
     locations: List

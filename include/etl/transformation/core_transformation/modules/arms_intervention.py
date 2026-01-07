@@ -8,7 +8,7 @@ from include.etl.transformation.utils import generate_key
 log = logging.getLogger("airflow.task")
 
 
-def transform_arms_interventions(study_key: str, study_data: pd.Series) -> Tuple:
+def transform_arms_interventions_module(study_key: str, study_data: pd.Series) -> Tuple:
 
     arm_groups = []
     arm_interventions = []

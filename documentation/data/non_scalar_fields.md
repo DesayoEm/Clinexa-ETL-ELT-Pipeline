@@ -153,8 +153,6 @@
 - **Limit**: 200 characters per name
 
 
-
-
 ### `intervention`
 
 - **Description**: The intervention(s) studied in the clinical trial. For interventional studies, at least one required. For observational studies, specifies interventions/exposures of interest if any.
@@ -215,6 +213,85 @@
 
 ---
 
+## SponsorCollaboratorsModule
+
+- **Index Field:** `protocolSection.outcomesModule`
+- **Description**: Outcome Measures
+
+
+### Non-scalar fields
+### `primaryOutcomes`
+
+- **Definition**:  A description of each primary outcome measure (or for observational studies, specific key measurement[s] or observation[s] used to describe patterns of diseases or traits or associations with exposures, risk factors or treatment).
+- **Data Type**: Outcome[]
+
+#### Fields
+
+##### `measure`
+- **Definition**: Name of the specific primary outcome measure
+- **Data Type**: Text
+- **Limit**: 254 characters
+
+##### `description`
+- **Definition**: Description of the metric used to characterize the specific primary outcome measure, if not included in the primary outcome measure title.
+- **Data Type**: Text
+- **Limit**: 999 characters
+
+##### `timeFrame`
+- **Definition**: Time point(s) at which the measurement is assessed for the specific metric used
+- **Data Type**: Text
+- **Limit**: 254 characters
+
+
+### `secondaryOutcomes`
+
+- **Definition**:  A description of each secondary outcome measure (or for observational studies, specific key measurement[s] or observation[s] used to describe patterns of diseases or traits or associations with exposures, risk factors or treatment).
+- **Data Type**: Outcome[]
+
+#### Fields
+
+##### `measure`
+- **Definition**: Name of the specific secondary outcome measure
+- **Data Type**: Text
+- **Limit**: 254 characters
+
+##### `description`
+- **Definition**: Description of the metric used to characterize the specific secondary outcome measure, if not included in the primary outcome measure title.
+- **Data Type**: Text
+- **Limit**: 999 characters
+
+##### `timeFrame`
+- **Definition**: Time point(s) at which the measurement is assessed for the specific metric used
+- **Data Type**: Text
+- **Limit**: 254 characters
+
+
+
+### `otherOutcomes`
+
+- **Definition**:  A description of each other outcome measure (or for observational studies, specific key measurement[s] or observation[s] used to describe patterns of diseases or traits or associations with exposures, risk factors or treatment).
+- **Data Type**: Outcome[]
+
+#### Fields
+
+##### `measure`
+- **Definition**: Name of the specific other outcome measure
+- **Data Type**: Text
+- **Limit**: 254 characters
+
+##### `description`
+- **Definition**: Description of the metric used to characterize the other primary outcome measure, if not included in the primary outcome measure title.
+- **Data Type**: Text
+- **Limit**: 999 characters
+
+##### `timeFrame`
+- **Definition**: Time point(s) at which the measurement is assessed for the specific metric used
+- **Data Type**: Text
+- **Limit**: 254 characters
+
+
+
+---
 
 ## contactsLocationsModule
 
@@ -222,6 +299,42 @@
 - **Description**:Contacts, Locations, and Investigator Information
 
 ### Non-scalar fields
+
+### `centralContacts`
+- **Definition**: Contact person(s) for general enrollment questions across all study locations. Required if no facility-level contacts provided.
+- **Object Type**: Array of dicts
+- **Cardinality**: 0 to many (but at least one central OR facility contact required per study)
+
+
+#### Fields
+
+##### `name`
+- **Definition**: Name or title of contact person
+- **Data Type**: Text
+- **Required**: Yes
+
+##### `role`
+- **Definition**: Role of the contact
+- **Data Type**: Enum(CentralContactRole)
+- **Values**: `CONTACT`, `PRINCIPAL_INVESTIGATOR`, etc.
+
+##### `phone`
+- **Definition**: Telephone number (preferably toll-free)
+- **Data Type**: Text
+- **Required**: Yes
+
+##### `phoneExt`
+- **Definition**: Phone extension
+- **Data Type**: Text
+- **Required**: No
+
+##### `email`
+- **Definition**: Email address
+- **Data Type**: Text
+- **Required**: Yes
+
+
+
 ### `locations`
 
 - **Object Type**: Location[]
@@ -276,51 +389,9 @@ NOTE: Officials are stored denormalized as JSON since not used for filtering/ana
 Avoids snowflaking the schema while preserving all contact information for downstream applications.
 
 
-### central_contacts
-
-- **Index Field:** `protocolSection.contactsLocationsModule.centralContacts[]`
-- **Definition**: Contact person(s) for general enrollment questions across all study locations. Required if no facility-level contacts provided.
-- **Object Type**: Array of dicts
-- **Cardinality**: 0 to many (but at least one central OR facility contact required per study)
 
 ---
 
-#### Fields
-
-##### `name`
-- **Definition**: Name or title of contact person
-- **Data Type**: Text
-- **Required**: Yes
-
-##### `role`
-- **Definition**: Role of the contact
-- **Data Type**: Enum(CentralContactRole)
-- **Values**: `CONTACT`, `PRINCIPAL_INVESTIGATOR`, etc.
-
-##### `phone`
-- **Definition**: Telephone number (preferably toll-free)
-- **Data Type**: Text
-- **Required**: Yes
-
-##### `phoneExt`
-- **Definition**: Phone extension
-- **Data Type**: Text
-- **Required**: No
-
-##### `email`
-- **Definition**: Email address
-- **Data Type**: Text
-- **Required**: Yes
-
----
-
-#### Dimensional Model Mapping
-
-- **Target Table**: `dim_contacts`
-- **Bridge Table**: `bridge_study_contacts` (study_key, contact_key)
-- **Surrogate Key**: `hash(study_key, name, role, phone)`
-
----
 
 
 ## References
