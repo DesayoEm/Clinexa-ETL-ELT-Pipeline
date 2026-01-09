@@ -1,10 +1,7 @@
-### Source: https://clinicaltrials.gov/data-api/about-api/study-data-structure
 
+# EXCLUDED FIELDS
 
-### EXCLUDED FIELDS
-
-## Identification
-
+## identificationModule
 
 ### org_study_type
 - **Index Field:** `protocolSection.identificationModule.orgStudyIdInfo.type`
@@ -19,8 +16,6 @@
 - **DataType**: Enum(OrgStudyIdType)
 - **Reason**: Missing from most rows and has no analytical value
 
-
-## Organisation
 
 ### org_name
 - **Index Field:** `protocolSection.identificationModule.organization.fullName`
@@ -46,7 +41,10 @@
 
 - **Reason**: Information provided in `protocolSection.sponsorCollaboratorsModule`
 
-## Design
+---
+
+## designModule
+
 ### design_masking_desc
 - **Index Field:** `protocolSection.designModule.designInfo.maskingInfo.maskingDescription`
 - **Definition**: Information about other parties who may be masked in the clinical trial, if any.
@@ -54,8 +52,6 @@
 - **Limit**: 1000 characters
 - **Reason**: Missing from most rows and has no analytical value
 
-
-## Expanded access
 
 ### exp_acc_type_individual
 - **Index Field:** `protocolSection.designModule.expandedAccessTypes.individual`
@@ -83,7 +79,10 @@
 - **DataType**: boolean (Yes/No)
 - **Reason**: Not present in raw API payload; UI-only construct
 
-## Eligibility
+---
+
+
+## eligibilityModule
 
 ### gender_based
 - **Index Field:** `protocolSection.eligibilityModule.genderBased`
@@ -110,8 +109,37 @@
 - * OLDER_ADULT - Older Adult
 - **Reason**: Data is presented as an array and information could be inferred from `protocolSection.eligibilityModule.maximumAge` and `protocolSection.eligibilityModule.minimumAge`
 
+---
 
-## status
+## armsInterventionsModule
+
+##### `armGroupLabels`
+- **Index Field:** `protocolSection.armsInterventionsModule.armGroups.armGroupLabels`
+- **Definition**: Labels of arm groups that receive this intervention. References `armGroups[].label` within the same study.
+- **Data Type**: Array of Text
+- **Required**: Yes (if multiple arms exist)
+
+
+### Arm <-->Intervention Relationship
+
+**Source Data**: The API provides bidirectional references:
+- `armGroups[].interventionNames` — intervention names per arm
+- `interventions[].armGroupLabels` — arm labels per intervention
+
+**Decision**: `armGroups[].interventionNames` as the source of truth for arm interventions and interventions[] as the source of truth interventions
+
+**Rationale**:
+1. Matches analytical workflow (arm -> intervention, not reverse)
+2. User-entered data may have inconsistencies between the two lists
+3. Avoids reconciliation logic and potential mismatches from bidirectional data quality issues
+
+**Implication**: Queries for "which arms use this intervention" require joining through `bridge_arm_interventions` from the arm side. We do not model the reverse relationship from `interventions[].armGroupLabels`.
+
+
+
+---
+
+## statusModule
 ### delayed_posting
 - **Index Field:** `protocolSection.statusModule.delayedPosting`
 - **Definition**:Post Prior to U.S. FDA Approval or Clearance
@@ -128,43 +156,7 @@ It is the responsibility of the sponsor or investigator to ensure that the study
 - **DataType**: NormalizedDate  
 - **Reason**: No analytical value
 
-
-
-## Large documents
-
-### large_doc_no_sap
-- **Index Field:** `documentSection.largeDocumentModule.noSap`
-- **Definition**: Indication that No Statistical Analysis Plan (SAP) exists for this study.
-- **DataType**: Boolean (Yes/No)
-- **Reason**: No analytical value
-
-## Miscellaneous
-
-### unposted_responsible_party
-- **Index Field:**  `annotationSection.annotationModule.unpostedAnnotation.unpostedResponsibleParty`
-- **Definition**: Responsible Party for Unposted Events.
-- **DataType**: text
-- **Reason**: No analytical value
-
-
-### sub_tracking_first_mcp_date
-- **Index Field:** `derivedSection.miscInfoModule.submissionTracking.firstMcpInfo.postDateStruct.date`
-- **Definition**: Date of first MCP posted date
-- **DataType**: NormalizedDate
-- **Reason**: Field not clearly described. can't determine analytical value
-
-
-### sub_tracking_first_mcp_type
-**Index Field:** derivedSection.miscInfoModule.submissionTracking.firstMcpInfo.postDateStruct.type
-
-**Definition**: Date type for first MCP posted date
-**DataType**: Enum(DateType) 
-**Source Values**:
-
-* ACTUAL - Actual
-* ESTIMATED - Estimated
-
-- **Reason**: Field not clearly described. can't determine analytical value
+---
 
 
 ## contactsLocationsModule
@@ -175,8 +167,9 @@ It is the responsibility of the sponsor or investigator to ensure that the study
 - **DataType**: Official[]
 - **Reason**: Officials lack contact information and serve administrative/ oversight purposes only. patient matching relies on location contacts, not officials
 
+----
 
-## References
+## referencesModule
 
 ### references
 -**Index Field:** `protocolSection.referencesModule.references`
@@ -197,7 +190,66 @@ It is the responsibility of the sponsor or investigator to ensure that the study
 - **Reason**: No analytical value
 
 
-### baseline_measures_module
+---
+
+### baselineMeasuresModule
 - **Index Field**: `resultsSection.baselineMeasuresModule`
 - **Description**: A table of demographic and baseline measures and data collected by arm or comparison group and for the entire population of participants in the clinical study.
-- **Reason for Exclusion**: No analytical value. Documentation/compliance data
+- **Reason for Exclusion**: Contains metadata about what baseline demographics were collected (age, gender, etc.) but not the actual measured values. 
+  No analytical value. Documentation/compliance data
+
+---
+
+### annotationModule
+- **Index Field:** `annotationSection.annotationModule`
+- **Content:** Administrative metadata tracking results submission/QA workflow
+- **Event Types:** RELEASE (results submitted), UNRELEASE (withdrawn), RESET (pulled back for revision)
+
+**Reason for Exclusion:**
+The annotation module tracks ClinicalTrials.gov's internal submission and quality assurance workflow, not clinical trial data. It contains administrative events like when results were submitted, withdrawn, or reset during the review process.
+
+**Example:**
+```json
+{
+  "unpostedResponsibleParty": "CrossComm, Inc.",
+  "unpostedEvents": [
+    {"type": "RELEASE", "date": "2024-09-20"},
+    {"type": "RESET", "date": "2024-10-14"}
+  ]
+}
+```
+---
+
+### documentSection / largeDocModule
+
+- **Index Field:** `documentSection`, `protocolSection.largeDocModule`
+- **Content:** File attachments (protocols, consent forms, statistical analysis plans)
+  - **Reason for Exclusion:** Links to documents, not structured data. Files would need separate download and parsing. 
+            Study protocols and documents are not used in patient matching or R&D analytics models. 
+---
+
+
+### miscInfoModule
+- **Index Field:** `derivedSection.miscInfoModule`
+- **Content:** System metadata, removed countries, results submission workflow tracking
+
+**Reason for Exclusion:**
+
+**1. Version Holder**
+- System metadata (last successful ClinicalTrials.gov data ingestion timestamp)
+- Not clinical or analytical data
+- No relevance to patient matching or R&D analytics
+
+**2. Removed Countries**
+- Historical record of countries where all study locations were closed/removed
+- Already reflected in current study_locations table (active sites only)
+- Patient matching uses current locations, not historical changes
+- Weak analytical signal for R&D (doesn't predict outcomes)
+
+**3. Submission Tracking**
+- Detailed workflow metadata (release dates, reset dates, Major Comment Postings)
+- Tracks ClinicalTrials.gov QA/review cycles
+- Similar to annotationModule - administrative process, not clinical data
+- Number of submission resets/MCPs is weak predictor of trial quality
+
+
