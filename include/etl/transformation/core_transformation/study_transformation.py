@@ -107,15 +107,12 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
     """
     Transform a single study record into a normalised schema.
 
-    Orchestrates all module-specific transformations (sponsors, conditions,
-    interventions, etc.) and collects their outputs into a StudyResult.
-    Each transformation module returns dimension records and bridge table
-    records linking them to the study.
+    Orchestrates all module-specific transformations and collects their outputs into a StudyResult.
 
     Args:
         nct_id: The ClinicalTrials.gov identifier (e.g., 'NCT12345678').
         study: Pandas Series containing the flattened study data from
-               json_normalize, with dot-notation column names.
+               json_normalize, with dot-separated column names.
 
     Returns:
         StudyResult dataclass containing lists of records for each entity
@@ -265,9 +262,9 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
     result["conditions_mesh"].extend(conditions_mesh)
     result["study_conditions_mesh"].extend(study_conditions_mesh)
     result["conditions_mesh_ancestors"].extend(conditions_mesh_ancestors)
-    result["study_conditions_mesh_ancestors"].extend(conditions_mesh_ancestors)
+    result["study_conditions_mesh_ancestors"].extend(study_conditions_mesh_ancestors)
     result["conditions_browse_leaves"].extend(conditions_browse_leaves)
-    result["study_conditions_browse_leaves"].extend(conditions_browse_leaves)
+    result["study_conditions_browse_leaves"].extend(study_conditions_browse_leaves)
     result["conditions_browse_branches"].extend(conditions_browse_branches)
     result["study_conditions_browse_branches"].extend(study_conditions_browse_branches)
 
@@ -357,7 +354,7 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
         interventions_mesh=result["interventions_mesh"],
         study_interventions_mesh=result["study_interventions_mesh"],
         interventions_mesh_ancestors=result["interventions_mesh_ancestors"],
-        study_interventions_mesh_ancestors=result["study_conditions_mesh_ancestors"],
+        study_interventions_mesh_ancestors=result["study_interventions_mesh_ancestors"],
         interventions_browse_leaves=result["interventions_browse_leaves"],
         study_interventions_browse_leaves=result["study_interventions_browse_leaves"],
         interventions_browse_branches=result["interventions_browse_branches"],
@@ -377,13 +374,13 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
     Args:
         results: Dictionary mapping entity names to lists of record dicts
 
-    Returns:
-        List of DataFrames in fixed order for downstream loading:
-        [studies, sponsors, study_sponsors, collaborators, study_collaborators,
-         conditions, study_conditions, keywords, study_keywords, interventions,
-         study_interventions, arm_group_interventions, central_contacts,
-         study_central_contacts, locations, study_locations, references,
-         links, ipds, flow_groups, flow_period_events]
+     Returns:
+        List of 64 DataFrames in fixed order matching the StudyResult schema,
+        with dimension tables deduplicated on their primary keys. Order follows
+        module grouping: studies, identification, sponsors, conditions,
+        arms/interventions, outcomes, contacts/locations, references,
+        outcome_measures, participant_flow, adverse_events, annotations,
+        conditions_browse, interventions_browse.
     """
 
     df_studies = pd.DataFrame(results["studies"])

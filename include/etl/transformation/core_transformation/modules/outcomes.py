@@ -9,6 +9,26 @@ log = logging.getLogger("airflow.task")
 
 
 def transform_outcomes_module(study_key: str, study_data: pd.Series) -> Tuple:
+    """
+    Transform planned outcome definitions from a clinical trial protocol.
+
+    Distinct from transform_outcome_measures_module, which contains actual
+    results. This module captures the pre-specified endpoints defined in the
+    study protocol before results are available
+
+    Args:
+        study_key: Unique identifier for the clinical trial study.
+        study_data: Flattened study record containing nested outcome definitions
+            at the path specified in NON_SCALAR_FIELDS["outcomes"].
+
+    Returns:
+        Three-element tuple containing:
+            - primary_outcomes: Primary endpoint definitions
+            - secondary_outcomes: Secondary endpoint definitions
+            - other_outcomes: Other endpoint definitions
+
+        All lists return empty if no outcome definitions exist for the study.
+    """
     primary_outcomes = []
     secondary_outcomes = []
     other_outcomes = []
@@ -32,36 +52,36 @@ def transform_outcomes_module(study_key: str, study_data: pd.Series) -> Tuple:
                 }
             )
 
-        secondary_outcomes_list = study_data.get(
-            f"{outcomes_module_index}.secondaryOutcomes"
-        )
-        if (
-            isinstance(secondary_outcomes_list, (list, np.ndarray))
-            and len(secondary_outcomes_list) > 0
-        ):
-            for secondary_outcome in secondary_outcomes_list:
-                secondary_outcomes.append(
-                    {
-                        "study_key": study_key,
-                        "measure": secondary_outcome.get("measure"),
-                        "description": secondary_outcome.get("description"),
-                        "time_frame": secondary_outcome.get("timeFrame"),
-                    }
-                )
+    secondary_outcomes_list = study_data.get(
+        f"{outcomes_module_index}.secondaryOutcomes"
+    )
+    if (
+        isinstance(secondary_outcomes_list, (list, np.ndarray))
+        and len(secondary_outcomes_list) > 0
+    ):
+        for secondary_outcome in secondary_outcomes_list:
+            secondary_outcomes.append(
+                {
+                    "study_key": study_key,
+                    "measure": secondary_outcome.get("measure"),
+                    "description": secondary_outcome.get("description"),
+                    "time_frame": secondary_outcome.get("timeFrame"),
+                }
+            )
 
-        other_outcomes_list = study_data.get(f"{outcomes_module_index}.otherOutcomes")
-        if (
-            isinstance(other_outcomes_list, (list, np.ndarray))
-            and len(other_outcomes_list) > 0
-        ):
-            for other_outcome in other_outcomes_list:
-                other_outcomes.append(
-                    {
-                        "study_key": study_key,
-                        "measure": other_outcome.get("measure"),
-                        "description": other_outcome.get("description"),
-                        "time_frame": other_outcome.get("timeFrame"),
-                    }
-                )
+    other_outcomes_list = study_data.get(f"{outcomes_module_index}.otherOutcomes")
+    if (
+        isinstance(other_outcomes_list, (list, np.ndarray))
+        and len(other_outcomes_list) > 0
+    ):
+        for other_outcome in other_outcomes_list:
+            other_outcomes.append(
+                {
+                    "study_key": study_key,
+                    "measure": other_outcome.get("measure"),
+                    "description": other_outcome.get("description"),
+                    "time_frame": other_outcome.get("timeFrame"),
+                }
+            )
 
     return primary_outcomes, secondary_outcomes, other_outcomes

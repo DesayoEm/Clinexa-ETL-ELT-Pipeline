@@ -9,6 +9,25 @@ log = logging.getLogger("airflow.task")
 
 
 def transform_identification_module(study_key: str, study_data: pd.Series) -> Tuple:
+    """
+    Transform secondary identifiers and NCT ID aliases from a clinical trial.
+
+    Clinical trials often have multiple identifiers beyond the primary NCT ID:
+    - Secondary IDs: Identifiers from other registries, sponsors, or bodies
+
+
+    Args:
+        study_key: Unique identifier for the clinical trial study.
+        study_data: Flattened study record containing nested identification
+            data at the path specified in NON_SCALAR_FIELDS["identification"].
+
+    Returns:
+        Two-element tuple containing:
+            - secondary_ids: Secondary identifier records
+            - nct_aliases: NCT alias records
+
+        All lists return empty if no secondary IDs/aliases exist for the study.
+    """
 
     secondary_ids = []
     nct_aliases = []
@@ -37,16 +56,16 @@ def transform_identification_module(study_key: str, study_data: pd.Series) -> Tu
                 }
             )
 
-        # nct id aliases
-        nct_id_aliases = study_data.get(f"{identification_index}.nctIdAliases")
+    # nct id aliases
+    nct_id_aliases = study_data.get(f"{identification_index}.nctIdAliases")
 
-        if isinstance(nct_id_aliases, (list, np.ndarray)) and len(nct_id_aliases) > 0:
-            for nct_id_alias in nct_id_aliases:
-                nct_aliases.append(
-                    {
-                        "study_key": study_key,
-                        "id_alias": nct_id_alias,
-                    }
-                )
+    if isinstance(nct_id_aliases, (list, np.ndarray)) and len(nct_id_aliases) > 0:
+        for nct_id_alias in nct_id_aliases:
+            nct_aliases.append(
+                {
+                    "study_key": study_key,
+                    "id_alias": nct_id_alias,
+                }
+            )
 
     return secondary_ids, nct_aliases

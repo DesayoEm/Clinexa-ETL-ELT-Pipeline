@@ -12,7 +12,7 @@ from include.etl.transformation.models import StudyResult
 EXPECTED_TABLES = StudyResult.expected_tables()
 
 
-class Orchestrator:
+class Transformer:
     """
     Manages the end-to-end transformation workflow: iterating through raw
     parquet files in S3, transforming each into normalised  records,

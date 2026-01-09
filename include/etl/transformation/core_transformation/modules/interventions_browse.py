@@ -11,6 +11,38 @@ log = logging.getLogger("airflow.task")
 def transform_interventions_browse_module(
     study_key: str, study_data: pd.Series
 ) -> Tuple:
+    """
+    Transform MeSH (Medical Subject Headings) intervention classifications from a study.
+
+    interventions to MeSH terms, enabling standardized searching across studies
+    for drugs, devices, procedures, and other intervention types.
+
+    This module extracts four levels of the MeSH hierarchy:
+    - Meshes: Direct MeSH term assignments for the study's interventions
+    - Ancestors: Parent terms in the MeSH tree (broader categories)
+    - Browse leaves: Terminal nodes in the browse hierarchy with relevance scores
+    - Browse branches: Top-level category groupings
+
+    Some MeSH terms contain comma-separated values which are split into
+    individual records to normalize the data.
+
+    Args:
+        study_key: Unique identifier for the clinical trial study.
+        study_data: Flattened study record containing nested MeSH classification data
+
+
+    Returns:
+        Eight-element tuple containing dimension and bridge table pairs:
+            - interventions_mesh, study_interventions_mesh: Direct MeSH assignments
+            - interventions_mesh_ancestors, study_interventions_mesh_ancestors
+            - interventions_browse_leaves, study_interventions_browse_leaves
+            - interventions_browse_branches, study_interventions_browse_branches:
+                Branch nodes with name, as_found, and relevance fields
+
+        All lists return empty if no MeSH data exists for the study.
+
+    """
+
     interventions_mesh = []
     study_interventions_mesh = []
 
@@ -51,7 +83,6 @@ def transform_interventions_browse_module(
                         {"mesh_key": mesh_key, "study_key": study_key}
                     )
 
-
     mesh_ancestors_list = study_data.get(f"{interventions_browse_index}.ancestors")
     if (
         isinstance(mesh_ancestors_list, (list, np.ndarray))
@@ -80,7 +111,6 @@ def transform_interventions_browse_module(
                         {"mesh_ancestor_key": ancestor_key, "study_key": study_key}
                     )
 
-
     mesh_browse_leaves = study_data.get(f"{interventions_browse_index}.browseLeaves")
     if (
         isinstance(mesh_browse_leaves, (list, np.ndarray))
@@ -104,8 +134,9 @@ def transform_interventions_browse_module(
                 {"mesh_browse_leaf_key": leaf_key, "study_key": study_key}
             )
 
-
-    mesh_browse_branches = study_data.get(f"{interventions_browse_index}.browseBranches")
+    mesh_browse_branches = study_data.get(
+        f"{interventions_browse_index}.browseBranches"
+    )
     if (
         isinstance(mesh_browse_branches, (list, np.ndarray))
         and len(mesh_browse_branches) > 0

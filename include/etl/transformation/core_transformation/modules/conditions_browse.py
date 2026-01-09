@@ -9,6 +9,36 @@ log = logging.getLogger("airflow.task")
 
 
 def transform_conditions_browse_module(study_key: str, study_data: pd.Series) -> Tuple:
+    """
+    Transform MeSH (Medical Subject Headings) condition classifications from a study.
+
+    MeSH is the NLM's controlled vocabulary thesaurus used for indexing biomedical
+    literature.
+
+    This module extracts four levels of the MeSH hierarchy:
+    - Meshes: Direct MeSH term assignments for the study's conditions
+    - Ancestors: Parent terms in the MeSH tree (broader categories)
+    - Browse leaves: Terminal nodes in the browse hierarchy with relevance scores
+    - Browse branches: Top-level category groupings (e.g., "Nervous System Diseases")
+
+    Some MeSH terms contain comma-separated values which are split into
+    individual records to normalize the data.
+
+    Args:
+        study_key: Unique identifier for the clinical trial study.
+        study_data: Flattened study record containing nested MeSH classification
+            data at the path specified in NON_SCALAR_FIELDS["conditions_browse"].
+
+    Returns:
+        Eight-element tuple containing dimension and bridge table pairs:
+            - conditions_mesh, study_conditions_mesh: Direct MeSH assignments
+            - conditions_mesh_ancestors, study_conditions_mesh_ancestors
+            - conditions_browse_leaves, study_conditions_browse_leaves
+            - conditions_browse_branches, study_conditions_browse_branches
+
+        All lists return empty if no MeSH data exists for the study.
+    """
+
     conditions_mesh = []
     study_conditions_mesh = []
 
@@ -22,7 +52,6 @@ def transform_conditions_browse_module(study_key: str, study_data: pd.Series) ->
     study_conditions_browse_branches = []
 
     conditions_browse_index = NON_SCALAR_FIELDS["conditions_browse"]["index_field"]
-
 
     meshes = study_data.get(f"{conditions_browse_index}.meshes")
     if isinstance(meshes, (list, np.ndarray)) and len(meshes) > 0:
@@ -47,7 +76,6 @@ def transform_conditions_browse_module(study_key: str, study_data: pd.Series) ->
                     study_conditions_mesh.append(
                         {"mesh_key": mesh_key, "study_key": study_key}
                     )
-
 
     mesh_ancestors_list = study_data.get(f"{conditions_browse_index}.ancestors")
     if (
@@ -76,8 +104,6 @@ def transform_conditions_browse_module(study_key: str, study_data: pd.Series) ->
                         {"mesh_ancestor_key": ancestor_key, "study_key": study_key}
                     )
 
-
-
     mesh_browse_leaves = study_data.get(f"{conditions_browse_index}.browseLeaves")
     if (
         isinstance(mesh_browse_leaves, (list, np.ndarray))
@@ -100,7 +126,6 @@ def transform_conditions_browse_module(study_key: str, study_data: pd.Series) ->
             study_conditions_browse_leaves.append(
                 {"mesh_browse_leaf_key": leaf_key, "study_key": study_key}
             )
-
 
     mesh_browse_branches = study_data.get(f"{conditions_browse_index}.browseBranches")
 

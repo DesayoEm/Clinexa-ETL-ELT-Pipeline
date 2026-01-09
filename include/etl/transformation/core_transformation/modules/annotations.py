@@ -10,8 +10,21 @@ log = logging.getLogger("airflow.task")
 
 def transform_annotations_module(study_key: str, study_data: pd.Series) -> List:
     """
-    Extract FDAAA 801 regulatory violations.
-    These indicate FDA compliance issues (non-submission, false information, penalties).
+    Transform FDAAA 801 regulatory violation records from a clinical trial study.
+
+    FDAAA 801 violations indicate FDA compliance issues such as non-submission
+    of required results, submission of false information, or civil monetary
+    penalties.
+
+    Args:
+        study_key: Unique identifier for the clinical trial study.
+        study_data: Flattened study record containing nested violation data
+            at the path specified in NON_SCALAR_FIELDS["annotations"].
+
+    Returns:
+        List of violation dictionaries, each containing:
+
+        Returns empty list if no violations exist for the study.
     """
     violations = []
 

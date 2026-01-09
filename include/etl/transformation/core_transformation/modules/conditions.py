@@ -11,6 +11,33 @@ log = logging.getLogger("airflow.task")
 def transform_conditions_module(
     nct_id: str, study_key: str, study_data: pd.Series
 ) -> Tuple:
+    """
+    Extract medical conditions and keywords from a clinical trial study.
+
+    Conditions are the diseases, disorders, or health issues being studied
+    (e.g., "Type 2 Diabetes", "Breast Cancer"). Keywords are sponsor-provided
+    search terms that may include conditions, interventions, or other relevant
+    descriptors to aid discoverability.
+
+    Both are modeled as dimension tables with bridge tables to support the
+    many-to-many relationship between studies and conditions/keywords.
+
+    Args:
+        nct_id: ClinicalTrials.gov identifier (e.g., "NCT12345678").
+        study_key: Unique identifier for the clinical trial study.
+        study_data: Flattened study record containing nested condition and
+            keyword data at the path specified in
+            NON_SCALAR_FIELDS["conditions"].
+
+    Returns:
+        Four-element tuple containing:
+            - conditions: Condition dimension records
+            - study_conditions: Bridge table linking studies to conditions
+            - keywords: Keyword dimension records
+            - study_keywords: Bridge table linking studies to keywords
+
+        All lists return empty if no conditions/keywords exist for the study.
+    """
     conditions = []
     study_conditions = []
     keywords = []

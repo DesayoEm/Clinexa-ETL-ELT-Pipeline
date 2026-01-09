@@ -10,6 +10,22 @@ log = logging.getLogger("airflow.task")
 
 
 def transform_reference_module(study_key: str, study_data: pd.Series) -> Tuple:
+    """
+    Extract literature references, external links, and IPD sharing info from a study.
+
+    Args:
+        study_key: Unique identifier for the clinical trial study.
+        study_data: Flattened study record containing nested reference data
+            at the path specified in NON_SCALAR_FIELDS["references"].
+
+    Returns:
+        Three-element tuple containing:
+            - study_references: Literature citations
+            - link_references: External URLs
+            - ipd_references: IPD sharing records
+
+        All lists return empty if no references exist for the study.
+    """
     study_references = []
     link_references = []
     ipd_references = []
@@ -38,12 +54,14 @@ def transform_reference_module(study_key: str, study_data: pd.Series) -> Tuple:
 
         for link in links_list:
             label = link.get("label")
+            url = link.get("url")
+            link_key = generate_key(study_key, label, url)
             link_references.append(
                 {
                     "study_key": study_key,
-                    "link_key": link,
+                    "link_key": link_key,
                     "label": label,
-                    "url": link.get("url"),
+                    "url": url,
                 }
             )
 

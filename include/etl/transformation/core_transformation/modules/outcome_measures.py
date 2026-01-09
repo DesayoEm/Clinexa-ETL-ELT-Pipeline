@@ -9,6 +9,28 @@ log = logging.getLogger("airflow.task")
 
 
 def transform_outcome_measures_module(study_key: str, study_data: pd.Series) -> Tuple:
+    """
+    Transform outcome measures and statistical results from a completed clinical trial.
+
+    Only studies with posted results will have this data populated.
+
+    Args:
+        study_key: Unique identifier for the clinical trial study.
+        study_data: Flattened study record containing nested outcome data
+            at the path specified in NON_SCALAR_FIELDS["outcome_measures"].
+
+    Returns:
+        Seven-element tuple containing:
+            - outcome_measures: Endpoint definitions
+            - outcome_measure_groups: Group definitions per outcome measure
+            - outcome_measure_denom_units: Dimension table of unit types
+            - outcome_measure_denom_counts: Sample sizes per group/unit
+            - outcome_measure_measurements: Result values with bounds and spread
+            - outcome_measure_analyses: Statistical test results
+            - outcome_measure_comparison_groups: Bridge table for analysis groups
+
+        All lists return empty if no outcome data exists for the study.
+    """
     outcome_measures = []
     outcome_measure_groups = []
     outcome_measure_denom_units = []
@@ -159,7 +181,7 @@ def transform_outcome_measures_module(study_key: str, study_data: pd.Series) -> 
             analyses = outcome_measure.get("analyses")
             if isinstance(analyses, (list, np.ndarray)) and len(analyses) > 0:
                 for analysis in analyses:
-                    param_type = (analysis.get("paramType"),)
+                    param_type = analysis.get("paramType")
                     param_value = analysis.get("paramValue")
 
                     analysis_key = generate_key(

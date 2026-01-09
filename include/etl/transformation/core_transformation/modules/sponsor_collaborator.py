@@ -12,13 +12,27 @@ def transform_sponsor_and_collaborators_module(
     nct_id: str, study_key: str, study_data: pd.Series
 ) -> Tuple:
     """
-    Extract sponsors from a single study.
+    Transform lead sponsor and collaborating organizations from a clinical trial.
+
+    Every study has exactly one lead sponsor (the organization responsible for
+    the trial) and zero or more collaborators (other organizations involved).
+
+    Lead sponsor fields are scalar values at a fixed path,
+    while collaborators are in an array.
+
     Args:
-        nct_id: The natural key for this study
-        study_key: The generated key for this study
-        study_data: The nested dict for one study (not a DataFrame)
+        nct_id: ClinicalTrials.gov identifier (e.g., "NCT12345678").
+        study_key: Unique identifier for the clinical trial study.
+        study_data: Flattened study record containing sponsor data
+
+
     Returns:
-        Tuple of (sponsors_list, study_sponsors_list)
+        Four-element tuple containing:
+            - sponsor: Lead sponsor dimension records
+            - study_sponsor: Bridge table linking study to lead sponsor
+            - collaborators: Collaborator dimension records
+            - study_collaborators: Bridge table linking study to collaborators
+
     """
 
     sponsor = []

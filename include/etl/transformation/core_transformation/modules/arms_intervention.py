@@ -9,6 +9,38 @@ log = logging.getLogger("airflow.task")
 
 
 def transform_arms_interventions_module(study_key: str, study_data: pd.Series) -> Tuple:
+    """
+    Extract arm groups and interventions from a clinical trial study.
+
+    Processes the arms/interventions module to produce normalized tables for:
+    - Arm groups (treatment/control cohorts in the study design)
+    - Arm-to-intervention mappings (which interventions each arm receives)
+    - Intervention definitions (drugs, devices, procedures, etc.)
+    - Study-to-intervention mappings (linking studies to their interventions)
+
+    Interventions may have alternate names (e.g., brand vs generic drug names).
+    These are extracted separately but inherit type and description from their
+    parent intervention. The armGroupLabels field on interventions is excluded
+    as a data source; arm-intervention relationships are derived solely from
+    armGroups[].interventionNames to maintain a single source of truth.
+
+    Args:
+        study_key: Unique identifier for the clinical trial study.
+        study_data: Flattened study record containing nested arm and
+            intervention data
+
+    Returns:
+        Six-element tuple containing:
+            - arm_groups: Arm group dimension records
+            - arm_interventions: Bridge table linking arms to intervention names
+            - intervention_names: Primary intervention dimension records
+            - study_intervention_names: Bridge table for primary interventions
+            - other_interventions_names: Alternate name intervention records
+            - study_other_interventions_names: Bridge table for alternate names
+
+
+        All lists return empty if no arms/interventions exist for the study.
+    """
 
     arm_groups = []
     arm_interventions = []

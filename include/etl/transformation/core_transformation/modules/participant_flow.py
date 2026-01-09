@@ -9,11 +9,42 @@ log = logging.getLogger("airflow.task")
 
 
 def transform_participant_flow_module(study_key: str, study_data: pd.Series) -> Tuple:
+    """
+    Transform participant flow data from a completed clinical trial.
+
+    Participant flow tracks how subjects moved through the study.
+    This data is only available for studies that have posted results.
+
+    The module extracts a hierarchical structure:
+    - Groups: Treatment/control arms for flow reporting
+    - Periods: Study phases (e.g., screening, treatment, follow-up)
+    - Milestones: Key transition points within periods (started, completed)
+    - Achievements: Per-group counts at each milestone
+    - Withdrawals: Dropout/discontinuation events per period
+    - Withdrawal reasons: Specific reasons with per-group counts
+
+    Args:
+        study_key: Unique identifier for the clinical trial study.
+        study_data: Flattened study record containing nested participant flow
+            data at the path specified in NON_SCALAR_FIELDS["participant_flow"].
+
+    Returns:
+        Six-element tuple containing:
+            - flow_groups: Group definitions
+            - flow_periods: Period definitions
+            - flow_period_milestones: Milestone definitions per period
+            - flow_period_milestone_achievements: Per-group counts at milestones
+            - flow_period_withdrawals: Withdrawal event definitions per period
+            - flow_period_withdrawal_reasons: Per-group withdrawal reasons/counts
+
+        All lists return empty if no participant flow data exists.
+
+    """
     flow_groups = []
     flow_periods = []
     flow_period_milestones = []
     flow_period_milestone_achievements = []
-    df_flow_period_withdrawals = []
+    flow_period_withdrawals = []
     flow_period_withdrawal_reasons = []
 
     flow_module_index = NON_SCALAR_FIELDS["participant_flow"]["index_field"]
@@ -106,7 +137,7 @@ def transform_participant_flow_module(study_key: str, study_data: pd.Series) -> 
                         study_key, period_key, withdrawal_type, withdrawal_comment
                     )
 
-                    df_flow_period_withdrawals.append(
+                    flow_period_withdrawals.append(
                         {
                             "study_key": study_key,
                             "period_key": period_key,
@@ -152,6 +183,6 @@ def transform_participant_flow_module(study_key: str, study_data: pd.Series) -> 
         flow_periods,
         flow_period_milestones,
         flow_period_milestone_achievements,
-        df_flow_period_withdrawals,
+        flow_period_withdrawals,
         flow_period_withdrawal_reasons,
     )
