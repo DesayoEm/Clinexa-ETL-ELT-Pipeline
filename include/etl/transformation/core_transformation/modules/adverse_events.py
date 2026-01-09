@@ -81,7 +81,7 @@ def transform_adverse_events_module(study_key: str, study_data: pd.Series) -> Tu
     # serious AEs
     serious_events_list = study_data.get(f"{events_index}.seriousEvents")
 
-    if isinstance(serious_events_list, (list, np.ndarray)) and len(serious_events) > 0:
+    if isinstance(serious_events_list, (list, np.ndarray)) and len(serious_events_list) > 0:
         for serious_event in serious_events_list:
             term = serious_event.get("term")
             serious_event_key = generate_key(study_key, adverse_event_key, term)

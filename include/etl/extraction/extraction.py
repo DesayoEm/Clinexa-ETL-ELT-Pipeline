@@ -12,7 +12,7 @@ import time
 from airflow.utils.context import Context
 from include.monitoring.exceptions import RequestExhaustionError
 from config.env_config import config
-from checkpoint import StateHandler
+from include.etl.extraction.checkpoint import StateHandler
 
 
 class Extractor:
@@ -128,7 +128,7 @@ class Extractor:
 
         self.requests.append(time.time())
 
-    def make_requests(self) -> Dict:
+    def make_requests(self) -> Dict | None:
         """
         main extraction loop with pagination, retry logic, and fault tolerance.
 

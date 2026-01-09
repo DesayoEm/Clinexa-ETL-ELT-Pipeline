@@ -23,11 +23,12 @@ def transform_conditions_browse_module(study_key: str, study_data: pd.Series) ->
 
     conditions_browse_index = NON_SCALAR_FIELDS["conditions_browse"]["index_field"]
 
+
     meshes = study_data.get(f"{conditions_browse_index}.meshes")
     if isinstance(meshes, (list, np.ndarray)) and len(meshes) > 0:
         for mesh in meshes:
             mesh_id = mesh.get("id")
-            mesh_terms = mesh.get("terms")
+            mesh_terms = mesh.get("term")
 
             if isinstance(mesh_terms, str) and mesh_terms:
                 terms = mesh_terms.split(",")
@@ -47,6 +48,7 @@ def transform_conditions_browse_module(study_key: str, study_data: pd.Series) ->
                         {"mesh_key": mesh_key, "study_key": study_key}
                     )
 
+
     mesh_ancestors_list = study_data.get(f"{conditions_browse_index}.ancestors")
     if (
         isinstance(mesh_ancestors_list, (list, np.ndarray))
@@ -54,7 +56,7 @@ def transform_conditions_browse_module(study_key: str, study_data: pd.Series) ->
     ):
         for mesh_ancestor in mesh_ancestors_list:
             ancestor_id = mesh_ancestor.get("id")
-            ancestor_terms = mesh_ancestor.get("terms")
+            ancestor_terms = mesh_ancestor.get("term")
 
             if isinstance(ancestor_terms, str) and ancestor_terms:
                 terms = ancestor_terms.split(",")
@@ -73,6 +75,8 @@ def transform_conditions_browse_module(study_key: str, study_data: pd.Series) ->
                     study_conditions_mesh_ancestors.append(
                         {"mesh_ancestor_key": ancestor_key, "study_key": study_key}
                     )
+
+
 
     mesh_browse_leaves = study_data.get(f"{conditions_browse_index}.browseLeaves")
     if (
@@ -97,6 +101,7 @@ def transform_conditions_browse_module(study_key: str, study_data: pd.Series) ->
                 {"mesh_browse_leaf_key": leaf_key, "study_key": study_key}
             )
 
+
     mesh_browse_branches = study_data.get(f"{conditions_browse_index}.browseBranches")
 
     if (
@@ -120,9 +125,6 @@ def transform_conditions_browse_module(study_key: str, study_data: pd.Series) ->
             study_conditions_browse_branches.append(
                 {"mesh_browse_branch_key": branch_key, "study_key": study_key}
             )
-
-    # else:
-    #     log.warning(f"No conditions_mesh found for study {study_key}, page - NCT ID {nct_id}")
 
     return (
         conditions_mesh,

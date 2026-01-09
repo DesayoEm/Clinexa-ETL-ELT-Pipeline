@@ -49,4 +49,4 @@ def transform_identification_module(study_key: str, study_data: pd.Series) -> Tu
                     }
                 )
 
-    return nct_aliases, secondary_ids
+    return secondary_ids, nct_aliases

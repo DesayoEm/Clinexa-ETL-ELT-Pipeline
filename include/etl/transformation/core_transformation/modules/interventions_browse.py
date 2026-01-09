@@ -31,7 +31,7 @@ def transform_interventions_browse_module(
     if isinstance(meshes, (list, np.ndarray)) and len(meshes) > 0:
         for mesh in meshes:
             mesh_id = mesh.get("id")
-            mesh_terms = mesh.get("terms")
+            mesh_terms = mesh.get("term")
 
             if isinstance(mesh_terms, str) and mesh_terms:
                 terms = mesh_terms.split(",")
@@ -51,6 +51,7 @@ def transform_interventions_browse_module(
                         {"mesh_key": mesh_key, "study_key": study_key}
                     )
 
+
     mesh_ancestors_list = study_data.get(f"{interventions_browse_index}.ancestors")
     if (
         isinstance(mesh_ancestors_list, (list, np.ndarray))
@@ -59,7 +60,7 @@ def transform_interventions_browse_module(
 
         for mesh_ancestor in mesh_ancestors_list:
             ancestor_id = mesh_ancestor.get("id")
-            ancestor_terms = mesh_ancestor.get("terms")
+            ancestor_terms = mesh_ancestor.get("term")
 
             if isinstance(ancestor_terms, str) and ancestor_terms:
                 terms = ancestor_terms.split(",")
@@ -78,6 +79,7 @@ def transform_interventions_browse_module(
                     study_interventions_mesh_ancestors.append(
                         {"mesh_ancestor_key": ancestor_key, "study_key": study_key}
                     )
+
 
     mesh_browse_leaves = study_data.get(f"{interventions_browse_index}.browseLeaves")
     if (
@@ -102,9 +104,8 @@ def transform_interventions_browse_module(
                 {"mesh_browse_leaf_key": leaf_key, "study_key": study_key}
             )
 
-    mesh_browse_branches = study_data.get(
-        f"{interventions_browse_index}.browseBranches"
-    )
+
+    mesh_browse_branches = study_data.get(f"{interventions_browse_index}.browseBranches")
     if (
         isinstance(mesh_browse_branches, (list, np.ndarray))
         and len(mesh_browse_branches) > 0
