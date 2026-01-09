@@ -291,131 +291,81 @@ NOTE: Contacts are stored denormalized as JSON since not used for filtering/anal
 
 ## annotationModule
 
-### violationEvents
+### Non-scalar fields
 
-**Index Field(s):** 
-- `annotationSection.annotationModule.violationAnnotation.violationEvents`
-
-- **Description**: Organizations responsible for the study.
+### `violationEvents`
+-**Index Field(s):** `annotationSection.annotationModule.violationAnnotation.violationEvents`
+- **Description**: Violation EventS
 - **DataType**: ViolationEvent[]
+- **Fields**: [type, description, creationDate, issuedDate, 
+                  releaseDate, postedDate
+           ]
 
-
-##### violationEvents Fields
-
-###### `type`
-- **Definition**: Descriptive word or phrase for the adverse event.
-- **Data Type**: Enum(ViolationEventType)
-**Enum Values**:
-- VIOLATION_IDENTIFIED - Violation Identified by FDA
-- CORRECTION_CONFIRMED - Correction Confirmed by FDA
-- PENALTY_IMPOSED - Penalty Imposed by FDA
-- ISSUES_IN_LETTER_ADDRESSED_CONFIRMED - Issues in letter addressed; confirmed by FDA.
-
-
-###### `description`
-- **Definition**: description
-- **DataType**: Text
-
-###### `creationDate`
-- **Definition**: Date the violation entered in PRS
-- **DataType**: NormalizedDate 
-
-###### `issuedDate`
-- **Definition**: Date the FDA issued the violation
-- **DataType**: NormalizedDate 
-
-###### `releaseDate`
-- **Definition**: Date the study record was submitted
-- **DataType**: NormalizedDate 
-
-###### `postedDate`
-- **Definition**: Date the violation is available on clinicaltrials.gov
-- **DataType**: NormalizedDate 
 ---
 
+
 ## conditionBrowseModule
+- **Index Field(s):** `derivedSection.conditionBrowseModule`
+- **Description**: Support for "Search By Topic"
+- **DataType**: BrowseModule
 
-#### meshes 
+### Non-scalar fields
 
-**Index Field(s):** `derivedSection.conditionBrowseModule.meshes`
-
+### `meshes`
 - **Description**: MeSH terms of Condition/Diseases field
 - **DataType**: Mesh[]
-
-#### meshes Fields
-
-###### `id`
-- **Definition**: MeSH ID
-- **DataType**: Text
-
-###### `term`
-- **Definition**: MeSH Heading
-- **DataType**: Text
+- **Fields**: [id, term]
 
 
-#### ancestors 
-
-**Index Field(s):** `derivedSection.conditionBrowseModule.ancestors`
-
+### `ancestors`
 - **Description**: Ancestor (higher level and more broad) terms of Condition MeSH terms in MeSH Tree hierarchy
 - **DataType**: Mesh[]
+- **Fields**: [id, term]
 
-#### ancestors Fields
 
-###### `id`
-- **Definition**: MeSH ID
-- **DataType**: Text
-
-###### `term`
-- **Definition**: MeSH Heading
-- **DataType**: Text
-
-#### browseLeaves 
-
-**Index Field(s):** `derivedSection.conditionBrowseModule.browseLeaves`
-
+### `browseLeaves`
 - **Description**: Leaf browsing topics for Condition field
 - **DataType**: BrowseLeaf[]
-
-#### browseLeaves Fields
-
-###### `id`
-- **Definition**: MeSH ID
-- **DataType**: Text
-
-###### `asFound`
-- **Definition**: Normalized Condition term used to find the topic
-- **DataType**: Text
-
-###### `relevance`
-- **Definition**: Normalized Condition term used to find the topic
-- **Data Type**: Enum(BrowseLeafRelevance)
-**Enum Values**:
-- LOW - low
-- HIGH - high
+- **Fields**: [id, asFound, relevance]
 
 
-
-#### browseBranches 
-
-**Index Field(s):** `derivedSection.conditionBrowseModule.browseBranches`
-
+### `browseBranches`
 - **Description**: Branch browsing topics for Condition field
 - **DataType**: BrowseBranch[]
+- **Fields**: [abbrev, name, relevance]
 
-#### browseBranches Fields
+---
 
-###### `abbrev`
-- **Definition**: MeSH abbreviation
-- **DataType**: Text
 
-###### `name`
-- **Definition**: name
-- **DataType**: Text
 
-###### `relevance`
-- **Definition**: Normalized Condition term used to find the topic
-- **Data Type**: Enum(BrowseLeafRelevance)
-**Enum Values**:
-- LOW - low
-- HIGH - high
+## conditionBrowseModule
+- **Index Field(s):** `derivedSection.interventionBrowseModule`
+- **Description**: Support for "Search By Topic"
+- **DataType**: BrowseModule
+
+### Non-scalar fields
+
+### `meshes`
+- **Description**: MeSH terms of intervention field
+- **DataType**: Mesh[]
+- **Fields**: [id, term]
+
+
+### `ancestors`
+- **Description**: Ancestor (higher level and more broad) terms of intervention MeSH terms in MeSH Tree hierarchy
+- **DataType**: Mesh[]
+- **Fields**: [id, term]
+
+
+### `browseLeaves`
+- **Description**: Leaf browsing topics for intervention field
+- **DataType**: BrowseLeaf[]
+- **Fields**: [id, asFound, relevance]
+
+
+### `browseBranches`
+- **Description**: Branch browsing topics for intervention field
+- **DataType**: BrowseBranch[]
+- **Fields**: [abbrev, name, relevance]
+
+---
