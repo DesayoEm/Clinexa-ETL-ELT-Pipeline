@@ -237,6 +237,7 @@ NON_SCALAR_FIELDS = {
             "browseBranches": ["abbrev", "name"],
         },
     },
+    # interventionBrowseModule
     "interventions_browse": {
         "index_field": "derivedSection.interventionBrowseModule",
         "non-scalar_fields": {

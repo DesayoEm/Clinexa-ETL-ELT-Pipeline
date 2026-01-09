@@ -42,6 +42,23 @@ from include.etl.transformation.core_transformation.modules.participant_flow imp
     transform_participant_flow_module,
 )
 
+from include.etl.transformation.core_transformation.modules.adverse_events import (
+    transform_adverse_events_module,
+)
+
+from include.etl.transformation.core_transformation.modules.annotations import (
+    transform_annotations_module,
+)
+
+from include.etl.transformation.core_transformation.modules.conditions_browse import (
+    transform_conditions_browse_module,
+)
+
+from include.etl.transformation.core_transformation.modules.interventions_browse import (
+    transform_interventions_browse_module,
+)
+
+
 log = logging.getLogger("airflow.task")
 
 
@@ -213,6 +230,74 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
     result["df_flow_period_withdrawals"].extend(df_flow_period_withdrawals)
     result["flow_period_withdrawal_reasons"].extend(flow_period_withdrawal_reasons)
 
+    # adverseEventsModule
+    (
+        adverse_events,
+        event_groups,
+        serious_events,
+        serious_event_stats,
+        other_events,
+        other_event_stats,
+    ) = transform_adverse_events_module(study_key, study)
+    result["adverse_events"].extend(adverse_events)
+    result["event_groups"].extend(event_groups)
+    result["serious_events"].extend(serious_events)
+    result["serious_event_stats"].extend(serious_event_stats)
+    result["other_events"].extend(other_events)
+    result["other_event_stats"].extend(other_event_stats)
+
+    # annotationModule
+    violations = transform_annotations_module(study_key, study)
+    result["violations"].extend(violations)
+
+    # conditionBrowseModule
+    (
+        conditions_mesh,
+        study_conditions_mesh,
+        conditions_mesh_ancestors,
+        study_conditions_mesh_ancestors,
+        conditions_browse_leaves,
+        study_conditions_browse_leaves,
+        conditions_browse_branches,
+        study_conditions_browse_branches,
+    ) = transform_conditions_browse_module(study_key, study)
+
+    result["conditions_mesh"].extend(conditions_mesh)
+    result["study_conditions_mesh"].extend(study_conditions_mesh)
+    result["conditions_mesh_ancestors"].extend(conditions_mesh_ancestors)
+    result["study_conditions_mesh_ancestors"].extend(conditions_mesh_ancestors)
+    result["conditions_browse_leaves"].extend(conditions_browse_leaves)
+    result["study_conditions_browse_leaves"].extend(conditions_browse_leaves)
+    result["conditions_browse_branches"].extend(conditions_browse_branches)
+    result["study_conditions_browse_branches"].extend(study_conditions_browse_branches)
+
+    # interventionBrowseModule
+    (
+        interventions_mesh,
+        study_interventions_mesh,
+        interventions_mesh_ancestors,
+        study_interventions_mesh_ancestors,
+        interventions_browse_leaves,
+        study_interventions_browse_leaves,
+        interventions_browse_branches,
+        study_interventions_browse_branches,
+    ) = transform_interventions_browse_module(study_key, study)
+
+    result["interventions_mesh"].extend(interventions_mesh)
+    result["study_interventions_mesh"].extend(study_interventions_mesh)
+    result["interventions_mesh_ancestors"].extend(interventions_mesh_ancestors)
+    result["study_interventions_mesh_ancestors"].extend(
+        study_interventions_mesh_ancestors
+    )
+    result["interventions_browse_leaves"].extend(interventions_browse_leaves)
+    result["study_interventions_browse_leaves"].extend(
+        study_interventions_browse_leaves
+    )
+    result["interventions_browse_branches"].extend(interventions_browse_branches)
+    result["study_interventions_browse_branches"].extend(
+        study_interventions_browse_branches
+    )
+
     return StudyResult(
         studies=result["studies"],
         secondary_ids=result["secondary_ids"],
@@ -254,6 +339,31 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
         flow_period_milestone_achievements=result["flow_period_milestone_achievements"],
         df_flow_period_withdrawals=result["df_flow_period_withdrawals"],
         flow_period_withdrawal_reasons=result["flow_period_withdrawal_reasons"],
+        adverse_events=result["adverse_events"],
+        event_groups=result["event_groups"],
+        serious_events=result["serious_events"],
+        serious_event_stats=result["serious_event_stats"],
+        other_events=result["other_events"],
+        other_event_stats=result["other_event_stats"],
+        violations=result["violations"],
+        conditions_mesh=result["conditions_mesh"],
+        study_conditions_mesh=result["study_conditions_mesh"],
+        conditions_mesh_ancestors=result["conditions_mesh_ancestors"],
+        study_conditions_mesh_ancestors=result["study_conditions_mesh_ancestors"],
+        conditions_browse_leaves=result["conditions_browse_leaves"],
+        study_conditions_browse_leaves=result["study_conditions_browse_leaves"],
+        conditions_browse_branches=result["conditions_browse_branches"],
+        study_conditions_browse_branches=result["study_conditions_browse_branches"],
+        interventions_mesh=result["interventions_mesh"],
+        study_interventions_mesh=result["study_interventions_mesh"],
+        interventions_mesh_ancestors=result["interventions_mesh_ancestors"],
+        study_interventions_mesh_ancestors=result["study_conditions_mesh_ancestors"],
+        interventions_browse_leaves=result["interventions_browse_leaves"],
+        study_interventions_browse_leaves=result["study_interventions_browse_leaves"],
+        interventions_browse_branches=result["interventions_browse_branches"],
+        study_interventions_browse_branches=result[
+            "study_interventions_browse_branches"
+        ],
     )
 
 
@@ -349,6 +459,55 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
         results["flow_period_withdrawal_reasons"]
     )
 
+    # adverseEventsModule
+    df_adverse_events = pd.DataFrame(results["adverse_events"])
+    df_event_groups = pd.DataFrame(results["event_groups"])
+    df_serious_events = pd.DataFrame(results["serious_events"])
+    df_serious_event_stats = pd.DataFrame(results["serious_event_stats"])
+    df_other_events = pd.DataFrame(results["other_events"])
+    df_other_event_stats = pd.DataFrame(results["other_event_stats"])
+
+    # annotationModule
+    df_violations = pd.DataFrame(results["violations"])
+
+    # conditionBrowseModule
+    df_conditions_mesh = pd.DataFrame(results["conditions_mesh"])
+    df_study_conditions_mesh = pd.DataFrame(results["study_conditions_mesh"])
+    df_conditions_mesh_ancestors = pd.DataFrame(results["conditions_mesh_ancestors"])
+    df_study_conditions_mesh_ancestors = pd.DataFrame(
+        results["study_conditions_mesh_ancestors"]
+    )
+    df_conditions_browse_leaves = pd.DataFrame(results["conditions_browse_leaves"])
+    df_study_conditions_browse_leaves = pd.DataFrame(
+        results["study_conditions_browse_leaves"]
+    )
+    df_conditions_browse_branches = pd.DataFrame(results["conditions_browse_branches"])
+    df_study_conditions_browse_branches = pd.DataFrame(
+        results["study_conditions_browse_branches"]
+    )
+
+    # interventionBrowseModule
+    df_interventions_mesh = pd.DataFrame(results["interventions_mesh"])
+    df_study_interventions_mesh = pd.DataFrame(results["study_interventions_mesh"])
+    df_interventions_mesh_ancestors = pd.DataFrame(
+        results["interventions_mesh_ancestors"]
+    )
+    df_study_interventions_mesh_ancestors = pd.DataFrame(
+        results["study_interventions_mesh_ancestors"]
+    )
+    df_interventions_browse_leaves = pd.DataFrame(
+        results["interventions_browse_leaves"]
+    )
+    df_study_interventions_browse_leaves = pd.DataFrame(
+        results["study_interventions_browse_leaves"]
+    )
+    df_interventions_browse_branches = pd.DataFrame(
+        results["interventions_browse_branches"]
+    )
+    df_study_interventions_browse_branches = pd.DataFrame(
+        results["study_interventions_browse_branches"]
+    )
+
     # dedupe
     df_sponsors = df_sponsors.drop_duplicates(subset=["sponsor_key"])
     df_collaborators = df_collaborators.drop_duplicates(subset=["collaborator_key"])
@@ -402,4 +561,27 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
         df_flow_period_milestone_achievements,
         df_flow_period_withdrawals,
         df_flow_period_withdrawal_reasons,
+        df_adverse_events,
+        df_event_groups,
+        df_serious_events,
+        df_serious_event_stats,
+        df_other_events,
+        df_other_event_stats,
+        df_violations,
+        df_conditions_mesh,
+        df_study_conditions_mesh,
+        df_conditions_mesh_ancestors,
+        df_study_conditions_mesh_ancestors,
+        df_conditions_browse_leaves,
+        df_study_conditions_browse_leaves,
+        df_conditions_browse_branches,
+        df_study_conditions_browse_branches,
+        df_interventions_mesh,
+        df_study_interventions_mesh,
+        df_interventions_mesh_ancestors,
+        df_study_interventions_mesh_ancestors,
+        df_interventions_browse_leaves,
+        df_study_interventions_browse_leaves,
+        df_interventions_browse_branches,
+        df_study_interventions_browse_branches,
     ]

@@ -52,6 +52,29 @@ class StudyResult:
     flow_period_milestone_achievements: List
     df_flow_period_withdrawals: List
     flow_period_withdrawal_reasons: List
+    adverse_events: List
+    event_groups: List
+    serious_events: List
+    serious_event_stats: List
+    other_events: List
+    other_event_stats: List
+    violations: List
+    conditions_mesh: List
+    study_conditions_mesh: List
+    conditions_mesh_ancestors: List
+    study_conditions_mesh_ancestors: List
+    conditions_browse_leaves: List
+    study_conditions_browse_leaves: List
+    conditions_browse_branches: List
+    study_conditions_browse_branches: List
+    interventions_mesh: List
+    study_interventions_mesh: List
+    interventions_mesh_ancestors: List
+    study_interventions_mesh_ancestors: List
+    interventions_browse_leaves: List
+    study_interventions_browse_leaves: List
+    interventions_browse_branches: List
+    study_interventions_browse_branches: List
 
     def tables(self) -> Dict[str, List[Dict]]:
         return asdict(self)
