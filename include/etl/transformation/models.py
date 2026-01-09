@@ -46,6 +46,12 @@ class StudyResult:
     outcome_measure_measurements: List
     outcome_measure_analyses: List
     outcome_measure_comparison_groups: List
+    flow_groups: List
+    flow_periods: List
+    flow_period_milestones: List
+    flow_period_milestone_achievements: List
+    df_flow_period_withdrawals: List
+    flow_period_withdrawal_reasons: List
 
     def tables(self) -> Dict[str, List[Dict]]:
         return asdict(self)

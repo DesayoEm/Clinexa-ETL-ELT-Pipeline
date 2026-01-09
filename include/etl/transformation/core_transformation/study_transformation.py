@@ -38,6 +38,10 @@ from include.etl.transformation.core_transformation.modules.outcome_measures imp
     transform_outcome_measures_module,
 )
 
+from include.etl.transformation.core_transformation.modules.participant_flow import (
+    transform_participant_flow_module,
+)
+
 log = logging.getLogger("airflow.task")
 
 
@@ -191,6 +195,24 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
         outcome_measure_comparison_groups
     )
 
+    # participantFlowModule
+    (
+        flow_groups,
+        flow_periods,
+        flow_period_milestones,
+        flow_period_milestone_achievements,
+        df_flow_period_withdrawals,
+        flow_period_withdrawal_reasons,
+    ) = transform_participant_flow_module(study_key, study)
+    result["flow_groups"].extend(flow_groups)
+    result["flow_periods"].extend(flow_periods)
+    result["flow_period_milestones"].extend(flow_period_milestones)
+    result["flow_period_milestone_achievements"].extend(
+        flow_period_milestone_achievements
+    )
+    result["df_flow_period_withdrawals"].extend(df_flow_period_withdrawals)
+    result["flow_period_withdrawal_reasons"].extend(flow_period_withdrawal_reasons)
+
     return StudyResult(
         studies=result["studies"],
         secondary_ids=result["secondary_ids"],
@@ -226,6 +248,12 @@ def transform_single_study(nct_id: str, study: pd.Series) -> StudyResult:
         outcome_measure_measurements=result["outcome_measure_measurements"],
         outcome_measure_analyses=result["outcome_measure_analyses"],
         outcome_measure_comparison_groups=result["outcome_measure_comparison_groups"],
+        flow_groups=result["flow_groups"],
+        flow_periods=result["flow_periods"],
+        flow_period_milestones=result["flow_period_milestones"],
+        flow_period_milestone_achievements=result["flow_period_milestone_achievements"],
+        df_flow_period_withdrawals=result["df_flow_period_withdrawals"],
+        flow_period_withdrawal_reasons=result["flow_period_withdrawal_reasons"],
     )
 
 
@@ -309,6 +337,18 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
         results["outcome_measure_comparison_groups"]
     )
 
+    # participantFlowModule
+    df_flow_groups = pd.DataFrame(results["flow_groups"])
+    df_flow_periods = pd.DataFrame(results["flow_periods"])
+    df_flow_period_milestones = pd.DataFrame(results["flow_period_milestones"])
+    df_flow_period_milestone_achievements = pd.DataFrame(
+        results["flow_period_milestone_achievements"]
+    )
+    df_flow_period_withdrawals = pd.DataFrame(results["df_flow_period_withdrawals"])
+    df_flow_period_withdrawal_reasons = pd.DataFrame(
+        results["flow_period_withdrawal_reasons"]
+    )
+
     # dedupe
     df_sponsors = df_sponsors.drop_duplicates(subset=["sponsor_key"])
     df_collaborators = df_collaborators.drop_duplicates(subset=["collaborator_key"])
@@ -356,4 +396,10 @@ def post_process_tables(results: Dict[str, List[Dict]]) -> List[pd.DataFrame]:
         df_outcome_measure_measurements,
         df_outcome_measure_analyses,
         df_outcome_measure_comparison_groups,
+        df_flow_groups,
+        df_flow_periods,
+        df_flow_period_milestones,
+        df_flow_period_milestone_achievements,
+        df_flow_period_withdrawals,
+        df_flow_period_withdrawal_reasons,
     ]

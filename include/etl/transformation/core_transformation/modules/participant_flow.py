@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Tuple
 import logging
 import pandas as pd
 import numpy as np
@@ -8,18 +8,24 @@ from include.etl.transformation.utils import generate_key
 log = logging.getLogger("airflow.task")
 
 
-def transform_flow_groups(study_key: str, study_data: pd.Series) -> List:
-    study_flow_groups = []
+def transform_participant_flow_module(study_key: str, study_data: pd.Series) -> Tuple:
+    flow_groups = []
+    flow_periods = []
+    flow_period_milestones = []
+    flow_period_milestone_achievements = []
+    df_flow_period_withdrawals = []
+    flow_period_withdrawal_reasons = []
 
-    flow_index = NON_SCALAR_FIELDS["flow_groups"]["index_field"]
-    flow_group_list = study_data.get(flow_index)
+    flow_module_index = NON_SCALAR_FIELDS["participant_flow"]["index_field"]
 
+    # flow groups
+    flow_group_list = study_data.get(f"{flow_module_index}.groups")
     if isinstance(flow_group_list, (list, np.ndarray)) and len(flow_group_list) > 0:
         for flow in flow_group_list:
             group_id = flow.get("id")
             group_key = generate_key(study_key, group_id)
 
-            study_flow_groups.append(
+            flow_groups.append(
                 {
                     "study_key": study_key,
                     "group_key": group_key,
@@ -29,20 +35,24 @@ def transform_flow_groups(study_key: str, study_data: pd.Series) -> List:
                 }
             )
 
-    return study_flow_groups
+    # flow periods
 
-
-def transform_flow_events(study_key: str, study_data: pd.Series) -> List:
-    flow_period_events = []
-
-    flow_index = NON_SCALAR_FIELDS["flow_periods"]["index_field"]
-    flow_period_list = study_data.get(flow_index)
-
+    flow_period_list = study_data.get(f"{flow_module_index}.periods")
     if isinstance(flow_period_list, (list, np.ndarray)) and len(flow_period_list) > 0:
         for period in flow_period_list:
             period_title = period.get("title")
             period_key = generate_key(study_key, period_title)
 
+            # flow periods
+            flow_periods.append(
+                {
+                    "study_key": study_key,
+                    "period_key": period_key,
+                    "title": period.get("title"),
+                }
+            )
+
+            # flow milestones
             period_milestones = period.get("milestones")
             if (
                 isinstance(period_milestones, (list, np.ndarray))
@@ -50,36 +60,39 @@ def transform_flow_events(study_key: str, study_data: pd.Series) -> List:
             ):
                 for period_milestone in period_milestones:
                     milestone_type = period_milestone.get("type")
-                    milestone_achievements = period_milestone.get("achievements")
+                    milestone_comment = period_milestone.get("comment")
+                    milestone_key = generate_key(
+                        study_key, period_key, milestone_type, milestone_comment
+                    )
 
+                    flow_period_milestones.append(
+                        {
+                            "study_key": study_key,
+                            "period_key": period_key,
+                            "milestone_key": milestone_key,
+                            "type": milestone_type,
+                            "comment": milestone_comment,
+                        }
+                    )
+
+                    # milestone achievements
+                    milestone_achievements = period_milestone.get("achievements")
                     if (
                         isinstance(milestone_achievements, (list, np.ndarray))
                         and len(milestone_achievements) > 0
                     ):
                         for achievement in milestone_achievements:
-                            flow_period_events.append(
+                            flow_period_milestone_achievements.append(
                                 {
                                     "study_key": study_key,
                                     "period_key": period_key,
-                                    "event_class": "ACHIEVEMENT",
-                                    "event_type": milestone_type,
-                                    "period_title": period_title,
+                                    "milestone_key": milestone_key,
                                     "group_id": achievement.get("groupId"),
+                                    "comment": achievement.get("comment"),
                                     "num_subjects": achievement.get("numSubjects"),
+                                    "num_units": achievement.get("numUnits"),
                                 }
                             )
-                    else:
-                        flow_period_events.append(
-                            {
-                                "study_key": study_key,
-                                "event_class": "ACHIEVEMENT",
-                                "event_type": milestone_type,
-                                "period_key": period_key,
-                                "period_title": period_title,
-                                "group_id": "UNKNOWN",
-                                "num_subjects": None,  # not 0
-                            }
-                        )
 
             period_withdrawals = period.get("dropWithdraws")
             if (
@@ -88,35 +101,57 @@ def transform_flow_events(study_key: str, study_data: pd.Series) -> List:
             ):
                 for withdrawal in period_withdrawals:
                     withdrawal_type = withdrawal.get("type")
-                    withdrawal_reasons = withdrawal.get("reasons")
+                    withdrawal_comment = withdrawal.get("comment")
+                    withdrawal_key = generate_key(
+                        study_key, period_key, withdrawal_type, withdrawal_comment
+                    )
+
+                    df_flow_period_withdrawals.append(
+                        {
+                            "study_key": study_key,
+                            "period_key": period_key,
+                            "withdrawal_key": withdrawal_key,
+                            "type": withdrawal_type,
+                            "comment": withdrawal_comment,
+                        }
+                    )
+
+                    # withdrawal reasons
+                    period_withdrawal_reasons = withdrawal.get("reasons")
 
                     if (
-                        isinstance(withdrawal_reasons, (list, np.ndarray))
-                        and len(withdrawal_reasons) > 0
+                        isinstance(period_withdrawal_reasons, (list, np.ndarray))
+                        and len(period_withdrawal_reasons) > 0
                     ):
-                        for reason in withdrawal_reasons:
-                            flow_period_events.append(
+                        for reason in period_withdrawal_reasons:
+
+                            reason_group_id = reason.get("groupId")
+                            reason_comment = reason.get("comment")
+
+                            reason_key = generate_key(
+                                study_key,
+                                period_key,
+                                withdrawal_key,
+                                reason_group_id,
+                                reason_comment,
+                            )
+                            flow_period_withdrawal_reasons.append(
                                 {
                                     "study_key": study_key,
                                     "period_key": period_key,
-                                    "event_class": "WITHDRAWAL",
-                                    "event_type": withdrawal_type,
-                                    "period_title": period_title,
-                                    "group_id": reason.get("groupId"),
+                                    "withdrawal_key": withdrawal_key,
+                                    "reason_key": reason_key,
+                                    "group_id": reason_group_id,
+                                    "reason": reason_comment,
                                     "num_subjects": reason.get("numSubjects"),
                                 }
                             )
-                    else:
-                        flow_period_events.append(
-                            {
-                                "study_key": study_key,
-                                "event_class": "WITHDRAWAL",
-                                "event_type": withdrawal_type,
-                                "period_key": period_key,
-                                "period_title": period_title,
-                                "group_id": "UNKNOWN",
-                                "num_subjects": None,  # not 0
-                            }
-                        )
 
-    return flow_period_events
+    return (
+        flow_groups,
+        flow_periods,
+        flow_period_milestones,
+        flow_period_milestone_achievements,
+        df_flow_period_withdrawals,
+        flow_period_withdrawal_reasons,
+    )

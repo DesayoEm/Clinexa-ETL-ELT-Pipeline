@@ -179,7 +179,6 @@ NON_SCALAR_FIELDS = {
                 {"milestones": ["type", "comment", "achievements"]},
                 {"dropWithdraws": ["type", "comment", "reasons"]},
             ],
-            "avail_ipds": ["id", "type", "url", "comment"],
         },
     },
     # adverseEventsModule
